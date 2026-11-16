@@ -2,6 +2,14 @@
 
 Toutes les versions d'Allô. La section correspondant au contenu de `VERSION` sert de notes de release.
 
+## [0.1.1] - 2026-11-16
+
+- Correction du crash au lancement après l'onboarding (affichage des heures du journal).
+- Lisibilité : les titres de l'onboarding restaient noirs en mode sombre.
+- MagicOS : « Écran de verrouillage » et « Pop-up en arrière-plan » deviennent facultatifs, avec un choix « Option introuvable ».
+- Raccourcis d'appli plus robustes.
+- Rapport de crash local : en cas d'arrêt, la trace s'affiche au lancement suivant avec un bouton « Copier ».
+
 ## [0.1.0] - 2026-11-16
 
 Première version.

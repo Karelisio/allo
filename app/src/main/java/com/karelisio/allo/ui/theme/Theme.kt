@@ -98,6 +98,10 @@ fun AlloTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () -> 
         motionScheme = if (reduce) MotionScheme.standard() else MotionScheme.expressive(),
         typography = AlloTypography,
     ) {
-        CompositionLocalProvider(LocalReduceMotion provides reduce, content = content)
+        CompositionLocalProvider(
+            LocalReduceMotion provides reduce,
+            androidx.compose.material3.LocalContentColor provides androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
+            content = content,
+        )
     }
 }

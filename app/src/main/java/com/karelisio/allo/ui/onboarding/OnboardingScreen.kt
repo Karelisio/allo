@@ -133,14 +133,22 @@ fun OnboardingScreen(onFinished: () -> Unit, onPermissionsChanged: () -> Unit) {
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { askManual = null },
             title = { Text(item.title) },
-            text = { Text("As-tu activé ce réglage ? MagicOS ne permet pas de le vérifier automatiquement.") },
+            text = { Text("As-tu activé ce réglage ? MagicOS ne permet pas de le vérifier automatiquement. Si l'option n'existe pas sur ton téléphone, choisis « Option introuvable ».") },
             confirmButton = {
                 TextButton(onClick = {
                     askManual = null
                     scope.launch { Graph.settings.update { it.copy(manualChecks = it.manualChecks + item.id) }; version++ }
-                }) { Text("Oui, c'est fait") }
+                }) { Text("C'est fait") }
             },
-            dismissButton = { TextButton(onClick = { askManual = null }) { Text("Pas encore") } },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = {
+                        askManual = null
+                        scope.launch { Graph.settings.update { it.copy(manualChecks = it.manualChecks + item.id) }; version++ }
+                    }) { Text("Option introuvable") }
+                    TextButton(onClick = { askManual = null }) { Text("Pas encore") }
+                }
+            },
         )
     }
 }

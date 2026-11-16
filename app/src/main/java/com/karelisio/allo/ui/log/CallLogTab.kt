@@ -3,7 +3,6 @@ package com.karelisio.allo.ui.log
 import android.content.Intent
 import android.net.Uri
 import android.provider.ContactsContract
-import android.text.format.DateUtils
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -104,7 +103,9 @@ fun kindLabel(k: CallKind) = when (k) {
     CallKind.REJECTED -> "Refusé"; CallKind.BLOCKED -> "Bloqué"; CallKind.VOICEMAIL -> "Messagerie"
 }
 
-fun timeLabel(date: Long): String = DateUtils.formatDateTime(null, date, DateUtils.FORMAT_SHOW_TIME)
+private val hourFmt = java.time.format.DateTimeFormatter.ofPattern("HH:mm")
+
+fun timeLabel(date: Long): String = hourFmt.format(java.time.Instant.ofEpochMilli(date).atZone(java.time.ZoneId.systemDefault()))
 
 @Composable
 fun CallLogTab(vm: MainViewModel, nav: NavHostController) {

@@ -71,6 +71,7 @@ fun AlloRoot(
     onLaunchConsumed: () -> Unit,
     isDefaultDialer: Boolean,
 ) {
+    com.karelisio.allo.ui.components.CrashReportDialog()
     if (!onboardingDone) {
         OnboardingScreen(onFinished = onOnboardingFinished, onPermissionsChanged = { vm.recheck() })
         return

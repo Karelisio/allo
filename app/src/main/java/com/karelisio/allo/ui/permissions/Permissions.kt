@@ -110,16 +110,16 @@ object Permissions {
                     details(c),
                 ) }))
             add(PermItem("honor_lockscreen", "Afficher sur l'écran de verrouillage",
-                "Dans Autorisations d'Allô, active « Afficher sur l'écran de verrouillage ».",
-                Icons.Rounded.Lock, PermKind.MANUAL,
+                "Facultatif. Si ta version de MagicOS la propose (Autorisations ou Autres autorisations d'Allô), active « Afficher sur l'écran de verrouillage ». Sinon, passe : l'écran plein écran d'Android suffit.",
+                Icons.Rounded.Lock, PermKind.MANUAL, required = false,
                 intents = { c -> listOf(
                     Intent("huawei.intent.action.NOTIFICATIONMANAGER").setPackage("com.hihonor.systemmanager"),
                     Intent().setComponent(ComponentName("com.hihonor.systemmanager", "com.hihonor.permissionmanager.ui.MainActivity")),
                     details(c),
                 ) }))
             add(PermItem("honor_popup", "Fenêtres pop-up en arrière-plan",
-                "Dans Autorisations d'Allô, active « Afficher des fenêtres pop-up lors de l'exécution en arrière-plan ».",
-                Icons.Rounded.PictureInPicture, PermKind.MANUAL,
+                "Facultatif. Si ta version de MagicOS la propose (Autorisations ou Autres autorisations d'Allô), active « Fenêtres pop-up en arrière-plan ». Sinon, passe.",
+                Icons.Rounded.PictureInPicture, PermKind.MANUAL, required = false,
                 intents = { c -> listOf(
                     Intent().setComponent(ComponentName("com.hihonor.systemmanager", "com.hihonor.permissionmanager.ui.MainActivity")),
                     Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, pkgUri(c)),

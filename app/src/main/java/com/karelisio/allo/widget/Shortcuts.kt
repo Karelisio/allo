@@ -16,15 +16,17 @@ import kotlinx.coroutines.withContext
 object Shortcuts {
     private var lastKeys: List<String>? = null
 
-    suspend fun update(ctx: Context, favorites: List<Contact>) = withContext(Dispatchers.IO) {
+    suspend fun update(ctx: Context, favorites: List<Contact>) = withContext(Dispatchers.IO) { runCatching { doUpdate(ctx, favorites) }; Unit }
+
+    private suspend fun doUpdate(ctx: Context, favorites: List<Contact>) {
         val top = favorites.filter { it.primaryNumber != null }.take(4)
         val keys = top.map { it.lookupKey + it.photoUri + it.name }
-        if (keys == lastKeys) return@withContext
+        if (keys == lastKeys) return
         lastKeys = keys
         val px = (108 * ctx.resources.displayMetrics.density).toInt()
         val list = top.mapIndexed { i, c ->
             ShortcutInfoCompat.Builder(ctx, "fav-${c.lookupKey}")
-                .setShortLabel(c.name.substringBefore(' '))
+                .setShortLabel(c.name.trim().substringBefore(' ').ifBlank { c.name.ifBlank { c.primaryNumber ?: "?" } })
                 .setLongLabel("Appeler ${c.name}")
                 .setIcon(IconCompat.createWithAdaptiveBitmap(AvatarBitmaps.render(ctx, c.name, c.photoUri, px, adaptive = true)))
                 .setIntent(Intent(ctx, CallTrampolineActivity::class.java).setAction(Intent.ACTION_CALL)

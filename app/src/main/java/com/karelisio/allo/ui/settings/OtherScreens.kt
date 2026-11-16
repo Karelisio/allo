@@ -153,9 +153,9 @@ private fun ManualConfirm(item: PermItem, onDone: (Boolean) -> Unit) {
     androidx.compose.material3.AlertDialog(
         onDismissRequest = { onDone(false) },
         title = { Text(item.title) },
-        text = { Text("As-tu activé ce réglage ? MagicOS ne permet pas de le vérifier automatiquement.") },
-        confirmButton = { TextButton(onClick = { onDone(true) }) { Text("Oui, c'est fait") } },
-        dismissButton = { TextButton(onClick = { onDone(false) }) { Text("Pas encore") } },
+        text = { Text("As-tu activé ce réglage ? MagicOS ne permet pas de le vérifier automatiquement. Si l'option n'existe pas sur ton téléphone, choisis « Option introuvable ».") },
+        confirmButton = { TextButton(onClick = { onDone(true) }) { Text("C'est fait") } },
+        dismissButton = { Row { TextButton(onClick = { onDone(true) }) { Text("Option introuvable") }; TextButton(onClick = { onDone(false) }) { Text("Pas encore") } } },
     )
 }
 
@@ -168,7 +168,8 @@ fun ReliabilityScreen(vm: MainViewModel, nav: NavHostController) {
     var version by remember { mutableIntStateOf(0) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { version++; vm.recheck() }
     val items = remember { Permissions.all(ctx) }
-    val granted = remember(version, s.manualChecks) { items.count { Permissions.isGranted(ctx, it, s.manualChecks) } }
+    val required = remember { items.filter { it.required } }
+    val granted = remember(version, s.manualChecks) { required.count { Permissions.isGranted(ctx, it, s.manualChecks) } }
     val honor = remember { items.filter { it.kind == PermKind.MANUAL || it.id == "battery" } }
     val blockingActive = s.blockConfig.let { c -> listOf(c.telemarketing, c.hidden, c.unknown, c.blacklist).any { it != BlockAction.ALLOW } }
     val requester = rememberPermissionRequester { version++ }
@@ -193,7 +194,7 @@ fun ReliabilityScreen(vm: MainViewModel, nav: NavHostController) {
         } }
         item { CheckRow("Blocage du démarchage", if (blockingActive) (if (isDefault || Dialer.isScreeningRoleHeld(ctx)) "Actif" else "Configuré mais inactif (rôle requis)") else "Désactivé",
             blockingActive && (isDefault || Dialer.isScreeningRoleHeld(ctx))) { nav.navigate(com.karelisio.allo.ui.Routes.BLOCKING) } }
-        item { CheckRow("Autorisations", "$granted / ${items.size} accordées", granted == items.size) { nav.navigate(com.karelisio.allo.ui.Routes.PERMISSIONS) } }
+        item { CheckRow("Autorisations", "$granted / ${required.size} indispensables accordées", granted == required.size) { nav.navigate(com.karelisio.allo.ui.Routes.PERMISSIONS) } }
         if (isHonorDevice) {
             section("MagicOS")
             items(honor.size) { i ->
