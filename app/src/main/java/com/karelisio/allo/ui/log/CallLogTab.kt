@@ -5,6 +5,7 @@ import android.net.Uri
 import android.provider.ContactsContract
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,7 +36,18 @@ import androidx.compose.material.icons.rounded.PersonAdd
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Sms
 import androidx.compose.material.icons.rounded.Voicemail
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.InputChip
+import androidx.compose.material.icons.rounded.Checklist
+import androidx.compose.material.icons.rounded.SelectAll
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import com.karelisio.allo.util.RecentSearches
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -120,20 +132,64 @@ fun CallLogTab(vm: MainViewModel, nav: NavHostController) {
         }
     }
     val sections = remember(filtered, filter) { CallLogGrouping.group(filtered, filter = filter) }
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    // Sélection multiple : identifiants des groupes sélectionnés.
+    val selected = remember { mutableStateListOf<Long>() }
+    val selecting = selected.isNotEmpty()
+    var recent by remember { mutableStateOf(RecentSearches.get(ctx)) }
+    LaunchedEffect(query) {
+        if (query.trim().length >= 2) { kotlinx.coroutines.delay(1500); RecentSearches.add(ctx, query.trim()); recent = RecentSearches.get(ctx) }
+    }
+    androidx.activity.compose.BackHandler(selecting) { selected.clear() }
     Column(Modifier.fillMaxSize()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            LazyRow(Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(FILTER_LABELS) { (f, label) -> FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text(label) }) }
+        androidx.compose.animation.AnimatedContent(selecting, label = "selbar") { sel ->
+            if (sel) {
+                Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = { selected.clear() }) { Icon(Icons.Rounded.Close, "Annuler la sélection") }
+                    Text("${selected.size} sélectionné${if (selected.size > 1) "s" else ""}", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                    IconButton(onClick = {
+                        val all = sections.flatMap { s -> s.groups.map { it.id } }
+                        if (selected.size == all.size) selected.clear() else { selected.clear(); selected.addAll(all) }
+                    }) { Icon(Icons.Rounded.SelectAll, "Tout sélectionner") }
+                    IconButton(onClick = {
+                        val ids = sections.flatMap { s -> s.groups.filter { it.id in selected }.flatMap { g -> g.entries.map { it.id } } }
+                        selected.clear()
+                        scope.launch { Graph.callLog.delete(ids); }
+                        ctx.toast("${ids.size} appel(s) supprimé(s)")
+                    }) { Icon(Icons.Rounded.Delete, "Supprimer", tint = MaterialTheme.colorScheme.error) }
+                }
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    LazyRow(Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(FILTER_LABELS) { (f, label) -> FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text(label) }) }
+                    }
+                    IconButton(onClick = { nav.navigate(com.karelisio.allo.ui.Routes.VOICEMAIL) }) { Icon(Icons.Rounded.Voicemail, "Messagerie vocale") }
+                    IconButton(onClick = { searching = !searching; if (!searching) query = "" }) { Icon(if (searching) Icons.Rounded.Close else Icons.Rounded.Search, "Rechercher") }
+                }
             }
-            IconButton(onClick = { searching = !searching; if (!searching) query = "" }) { Icon(if (searching) Icons.Rounded.Close else Icons.Rounded.Search, "Rechercher") }
         }
-        AnimatedVisibility(searching) {
-            OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                placeholder = { Text("Nom ou numéro") }, singleLine = true, shape = RoundedCornerShape(28.dp),
-                leadingIcon = { Icon(Icons.Rounded.Search, null) })
+        AnimatedVisibility(searching && !selecting) {
+            Column {
+                OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                    placeholder = { Text("Nom ou numéro") }, singleLine = true, shape = RoundedCornerShape(28.dp),
+                    leadingIcon = { Icon(Icons.Rounded.Search, null) },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { if (query.isNotBlank()) { RecentSearches.add(ctx, query.trim()); recent = RecentSearches.get(ctx) } }))
+                if (query.isEmpty() && recent.isNotEmpty()) {
+                    LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(recent) { r ->
+                            InputChip(selected = false, onClick = { query = r }, label = { Text(r) },
+                                leadingIcon = { Icon(Icons.Rounded.History, null, Modifier.size(16.dp)) },
+                                trailingIcon = { Icon(Icons.Rounded.Close, "Oublier", Modifier.size(16.dp).clickable { RecentSearches.remove(ctx, r); recent = RecentSearches.get(ctx) }) })
+                        }
+                    }
+                }
+            }
         }
         if (sections.isEmpty()) {
-            EmptyState(if (entries.isEmpty()) "Aucun appel pour l'instant" else "Aucun appel ne correspond")
+            if (entries.isEmpty()) EmptyState("Aucun appel pour l'instant", detail = "Tes appels apparaîtront ici, regroupés par jour.")
+            else EmptyState("Aucun appel ne correspond", Icons.Rounded.Search)
             return
         }
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 96.dp)) {
@@ -146,7 +202,13 @@ fun CallLogTab(vm: MainViewModel, nav: NavHostController) {
                 sec.groups.forEach { g ->
                     val i = index++
                     item(key = "g-${g.id}") {
-                        Cascade(i, Modifier.animateItem()) { CallRow(g, nav) }
+                        Cascade(i, Modifier.animateItem()) {
+                            CallRow(g, nav, RowSelection(
+                                active = selecting,
+                                selected = g.id in selected,
+                                onToggle = { if (g.id in selected) selected.remove(g.id) else selected.add(g.id) },
+                            ))
+                        }
                     }
                 }
             }
@@ -155,15 +217,18 @@ fun CallLogTab(vm: MainViewModel, nav: NavHostController) {
 }
 
 @Composable
-fun EmptyState(text: String) {
+fun EmptyState(text: String, icon: ImageVector = Icons.Rounded.History, detail: String? = null) {
     Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
-        Text(text, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        com.karelisio.allo.ui.components.EmptyIllustration(icon, text, detail)
     }
 }
 
+/** État de sélection multiple d'une ligne. */
+class RowSelection(val active: Boolean, val selected: Boolean, val onToggle: () -> Unit)
+
 /** Ligne du journal : glisser à droite = rappeler, à gauche = SMS ; appui long = menu. */
 @Composable
-fun CallRow(g: CallGroup, nav: NavHostController) {
+fun CallRow(g: CallGroup, nav: NavHostController, selection: RowSelection? = null) {
     val ctx = LocalContext.current
     val caller = LocalCaller.current
     val haptics = rememberHaptics()
@@ -175,8 +240,8 @@ fun CallRow(g: CallGroup, nav: NavHostController) {
     val sk = "log-${g.id}"
     SwipeToDismissBox(
         state = state,
-        enableDismissFromStartToEnd = !hidden,
-        enableDismissFromEndToStart = !hidden,
+        enableDismissFromStartToEnd = !hidden && selection?.active != true,
+        enableDismissFromEndToStart = !hidden && selection?.active != true,
         onDismiss = { v ->
             haptics.confirm()
             when (v) {
@@ -200,15 +265,23 @@ fun CallRow(g: CallGroup, nav: NavHostController) {
     ) {
         Box {
             Row(
-                Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)
+                Modifier.fillMaxWidth()
+                    .background(if (selection?.selected == true) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface)
                     .combinedClickable(
-                        onClick = { nav.navigate(if (e.lookupUri != null) Routes.contact(e.lookupUri, sk) else Routes.number(e.number, sk)) },
-                        onLongClick = { haptics.long(); menu = true },
+                        onClick = {
+                            if (selection?.active == true) { haptics.tick(); selection.onToggle() }
+                            else nav.navigate(if (e.lookupUri != null) Routes.contact(e.lookupUri, sk) else Routes.number(e.number, sk))
+                        },
+                        onLongClick = { haptics.long(); if (selection?.active == true) selection.onToggle() else menu = true },
                     )
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Avatar(e.name, e.photoUri, size = 48.dp, key = e.name ?: e.number, modifier = Modifier.sharedAvatar(sk))
+                if (selection?.active == true) {
+                    Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) { Checkbox(selection.selected, { selection.onToggle() }) }
+                } else {
+                    Avatar(e.name, e.photoUri, size = 48.dp, key = e.name ?: e.number, modifier = Modifier.sharedAvatar(sk))
+                }
                 Spacer(Modifier.width(16.dp))
                 Column(Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -233,7 +306,7 @@ fun CallRow(g: CallGroup, nav: NavHostController) {
                             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                     }
                 }
-                if (!hidden) IconButton(onClick = { haptics.tick(); caller.call(e.number, e.lookupUri) }) { Icon(Icons.Rounded.Call, "Appeler", tint = MaterialTheme.colorScheme.primary) }
+                if (!hidden && selection?.active != true) IconButton(onClick = { haptics.tick(); caller.call(e.number, e.lookupUri) }) { Icon(Icons.Rounded.Call, "Appeler", tint = MaterialTheme.colorScheme.primary) }
             }
             DropdownMenu(menu, { menu = false }) {
                 if (!hidden) {
@@ -244,6 +317,8 @@ fun CallRow(g: CallGroup, nav: NavHostController) {
                     if (e.name == null) DropdownMenuItem(text = { Text("Ajouter aux contacts") }, leadingIcon = { Icon(Icons.Rounded.PersonAdd, null) },
                         onClick = { menu = false; nav.navigate(Routes.edit(number = e.number)) })
                 }
+                if (selection != null) DropdownMenuItem(text = { Text("Sélectionner") }, leadingIcon = { Icon(Icons.Rounded.Checklist, null) },
+                    onClick = { menu = false; selection.onToggle() })
                 DropdownMenuItem(text = { Text("Supprimer") }, leadingIcon = { Icon(Icons.Rounded.Delete, null) },
                     onClick = { menu = false; scope.launch { Graph.callLog.delete(g.entries.map { it.id }) } })
             }

@@ -62,7 +62,17 @@ data class ContactEdit(
     val emails: List<String> = emptyList(),
     val note: String = "",
     val photo: ByteArray? = null,
+    /** Compte de destination d'un nouveau contact (null = téléphone). */
+    val account: ContactAccount? = null,
 )
+
+data class ContactAccount(val type: String, val name: String) {
+    val label: String get() = when {
+        type == "com.google" -> "Google · $name"
+        type.contains("exchange", true) -> "Exchange · $name"
+        else -> name
+    }
+}
 
 data class NumberLookup(val contactId: Long, val lookupKey: String, val name: String, val photoUri: String?, val ringtone: String?)
 
@@ -224,8 +234,8 @@ class ContactsRepository(private val context: Context) {
 
         if (existingRaw == null) {
             ops += ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
-                .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
-                .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null).build()
+                .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, edit.account?.type)
+                .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, edit.account?.name).build()
         } else {
             val mimes = buildList {
                 add(CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE); add(CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
@@ -266,6 +276,24 @@ class ContactsRepository(private val context: Context) {
         val rawId = existingRaw ?: results.firstOrNull()?.uri?.let { ContentUris.parseId(it) } ?: return@withContext null
         lookupKeyForRaw(rawId)
     }
+
+    /** Comptes où l'on peut écrire des contacts (adaptateurs de synchro « uploading »). */
+    fun writableAccounts(): List<ContactAccount> = runCatching {
+        val writableTypes = android.content.ContentResolver.getSyncAdapterTypes()
+            .filter { it.authority == ContactsContract.AUTHORITY && it.supportsUploading() }
+            .map { it.accountType }.toSet()
+        val out = LinkedHashSet<ContactAccount>()
+        resolver.query(ContactsContract.RawContacts.CONTENT_URI,
+            arrayOf(ContactsContract.RawContacts.ACCOUNT_TYPE, ContactsContract.RawContacts.ACCOUNT_NAME),
+            "${ContactsContract.RawContacts.DELETED} = 0", null, null)?.use { c ->
+            while (c.moveToNext()) {
+                val t = c.getString(0) ?: continue
+                val n = c.getString(1) ?: continue
+                if (t in writableTypes) out += ContactAccount(t, n)
+            }
+        }
+        out.toList()
+    }.getOrDefault(emptyList())
 
     private fun rawContactFor(contactId: Long): Long? =
         resolver.query(ContactsContract.RawContacts.CONTENT_URI, arrayOf(ContactsContract.RawContacts._ID),

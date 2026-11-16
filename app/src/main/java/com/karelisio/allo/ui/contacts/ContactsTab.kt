@@ -33,6 +33,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PersonAdd
+import androidx.compose.material.icons.rounded.StarOutline
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -98,7 +99,7 @@ fun FavoritesTab(vm: MainViewModel, nav: NavHostController) {
     val caller = LocalCaller.current
     val haptics = rememberHaptics()
     if (favorites.isEmpty() && frequent.isEmpty()) {
-        EmptyState("Ajoute des favoris depuis la fiche d'un contact (étoile).")
+        EmptyState("Pas encore de favoris", androidx.compose.material.icons.Icons.Rounded.StarOutline, "Touche l'étoile sur la fiche d'un contact pour l'épingler ici.")
         return
     }
     LazyVerticalGrid(GridCells.Adaptive(104.dp), Modifier.fillMaxSize(), contentPadding = PaddingValues(12.dp, 8.dp, 12.dp, 96.dp)) {
@@ -197,7 +198,14 @@ fun ContactsTab(vm: MainViewModel, nav: NavHostController) {
                     }
                 }
             }
-            if (filtered.isEmpty()) item { EmptyState(if (contacts.isEmpty()) "Aucun contact" else "Aucun résultat") }
+            if (filtered.isEmpty()) item {
+                Box(Modifier.fillMaxWidth().padding(top = 48.dp), contentAlignment = Alignment.Center) {
+                    com.karelisio.allo.ui.components.EmptyIllustration(
+                        if (contacts.isEmpty()) androidx.compose.material.icons.Icons.Rounded.PersonAdd else Icons.Rounded.Search,
+                        if (contacts.isEmpty()) "Aucun contact" else "Aucun résultat",
+                        if (contacts.isEmpty()) "Crée ton premier contact ou autorise l'accès aux contacts." else null)
+                }
+            }
         }
         if (grouped.size > 4 && query.isBlank()) {
             FastScroller(

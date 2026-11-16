@@ -78,6 +78,15 @@ fun ContactEditScreen(nav: NavHostController, lookupKey: String?, initialNumber:
     var existingPhoto by remember { mutableStateOf<String?>(null) }
     var preview by remember { mutableStateOf<Bitmap?>(null) }
     var saving by remember { mutableStateOf(false) }
+    var accounts by remember { mutableStateOf(emptyList<com.karelisio.allo.data.ContactAccount>()) }
+    var accountMenu by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (lookupKey == null) {
+            accounts = withContext(Dispatchers.IO) { Graph.contacts.writableAccounts() }
+            // Par défaut : le premier compte Google s'il existe (contacts sauvegardés), sinon le téléphone.
+            edit = edit.copy(account = accounts.firstOrNull { it.type == "com.google" })
+        }
+    }
     LaunchedEffect(lookupKey) {
         if (lookupKey != null) {
             val d = withContext(Dispatchers.IO) { Graph.contacts.detail(lookupKey) } ?: return@LaunchedEffect
@@ -132,6 +141,19 @@ fun ContactEditScreen(nav: NavHostController, lookupKey: String?, initialNumber:
                         Icon(Icons.Rounded.PhotoCamera, "Photo", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(20.dp))
                     }
                 }
+            }
+            if (lookupKey == null) {
+                Box {
+                    androidx.compose.material3.AssistChip(
+                        onClick = { accountMenu = true },
+                        label = { Text("Enregistrer dans : " + (edit.account?.label ?: "Téléphone")) },
+                    )
+                    DropdownMenu(accountMenu, { accountMenu = false }) {
+                        DropdownMenuItem(text = { Text("Téléphone (non synchronisé)") }, onClick = { accountMenu = false; edit = edit.copy(account = null) })
+                        accounts.forEach { a -> DropdownMenuItem(text = { Text(a.label) }, onClick = { accountMenu = false; edit = edit.copy(account = a) }) }
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
             }
             OutlinedTextField(edit.givenName, { edit = edit.copy(givenName = it) }, Modifier.fillMaxWidth(), label = { Text("Prénom") }, singleLine = true)
             Spacer(Modifier.height(8.dp))

@@ -23,6 +23,7 @@ object Graph {
     val contacts by lazy { ContactsRepository(app) }
     val callLog by lazy { CallLogRepository(app, sims) }
     val block by lazy { BlockRepository(db, settings, contacts) }
+    val voicemail by lazy { com.karelisio.allo.data.VoicemailRepository(app) }
 
     fun init(context: Context) { app = context.applicationContext }
 }

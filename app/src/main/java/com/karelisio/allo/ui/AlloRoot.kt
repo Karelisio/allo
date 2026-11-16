@@ -60,6 +60,9 @@ object Routes {
     const val RELIABILITY = "settings/reliability"
     const val ECHO = "settings/echo"
     const val ABOUT = "settings/about"
+    const val VOICEMAIL = "voicemail"
+    const val STATS = "stats"
+    const val RINGTONE_GROUPS = "settings/groups"
 }
 
 @Composable
@@ -126,6 +129,7 @@ fun AlloRoot(
                     screen(Routes.RELIABILITY) { ReliabilityScreen(vm, nav) }
                     screen(Routes.ECHO) { EchoSettingsScreen(vm, nav) }
                     screen(Routes.ABOUT) { AboutScreen(nav) }
+                    screen(Routes.VOICEMAIL) { com.karelisio.allo.ui.log.VoicemailScreen(vm, nav) }
                 }
             }
         }

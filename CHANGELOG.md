@@ -2,6 +2,16 @@
 
 Toutes les versions d'Allô. La section correspondant au contenu de `VERSION` sert de notes de release.
 
+## [0.3.0] - 2026-11-16
+
+Nouvelles fonctions.
+
+- Journal : sélection multiple (appui long → Sélectionner) et suppression groupée.
+- Journal : recherches récentes proposées sous la barre de recherche.
+- Messagerie vocale visuelle : écoute, transcription, rappel et suppression des messages fournis au système par l'opérateur ; sinon, bouton pour appeler la messagerie.
+- Nouveau contact : choix du compte de destination (Google, Exchange… ou téléphone).
+- États vides illustrés et animés (journal, favoris, contacts).
+
 ## [0.2.0] - 2026-11-16
 
 Fiabilité.
