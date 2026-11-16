@@ -17,7 +17,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
+import com.karelisio.allo.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
@@ -56,13 +61,30 @@ private val DarkGreen = darkColorScheme(
 
 private val base = Typography()
 
+/** Roboto Flex (OFL), police variable : graisse, largeur et taille optique réglables. */
+@OptIn(ExperimentalTextApi::class)
+private fun flex(weight: Int, width: Float = 100f, opsz: Float = 14f) = Font(
+    R.font.roboto_flex,
+    weight = FontWeight(weight),
+    variationSettings = FontVariation.Settings(
+        FontVariation.weight(weight),
+        FontVariation.width(width),
+        FontVariation.Setting("opsz", opsz),
+    ),
+)
+
+/** Titres expressifs : un peu plus larges, taille optique « affichage ». */
+private val FlexDisplay = FontFamily(
+    flex(400, 108f, 72f), flex(500, 108f, 72f), flex(600, 106f, 48f), flex(700, 104f, 36f),
+)
+
 val AlloTypography = Typography(
-    displayLarge = base.displayLarge.copy(fontWeight = FontWeight.Normal, letterSpacing = (-1).sp),
-    displayMedium = base.displayMedium.copy(fontWeight = FontWeight.Normal),
-    displaySmall = base.displaySmall.copy(fontWeight = FontWeight.Medium),
-    headlineLarge = base.headlineLarge.copy(fontWeight = FontWeight.SemiBold),
-    headlineMedium = base.headlineMedium.copy(fontWeight = FontWeight.SemiBold),
-    headlineSmall = base.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
+    displayLarge = base.displayLarge.copy(fontFamily = FlexDisplay, fontWeight = FontWeight.Normal, letterSpacing = (-1).sp),
+    displayMedium = base.displayMedium.copy(fontFamily = FlexDisplay, fontWeight = FontWeight.Normal),
+    displaySmall = base.displaySmall.copy(fontFamily = FlexDisplay, fontWeight = FontWeight.Medium),
+    headlineLarge = base.headlineLarge.copy(fontFamily = FlexDisplay, fontWeight = FontWeight.SemiBold),
+    headlineMedium = base.headlineMedium.copy(fontFamily = FlexDisplay, fontWeight = FontWeight.SemiBold),
+    headlineSmall = base.headlineSmall.copy(fontFamily = FlexDisplay, fontWeight = FontWeight.SemiBold),
     titleLarge = base.titleLarge.copy(fontWeight = FontWeight.SemiBold),
     titleMedium = base.titleMedium.copy(fontWeight = FontWeight.SemiBold),
     labelLarge = base.labelLarge.copy(fontWeight = FontWeight.SemiBold),
@@ -70,10 +92,10 @@ val AlloTypography = Typography(
 
 /** Gros chiffres du clavier et de la durée d'appel. */
 object AlloType {
-    val dialDigit = TextStyle(fontSize = 34.sp, fontWeight = FontWeight.Normal, letterSpacing = 0.sp)
-    val dialNumber = TextStyle(fontSize = 40.sp, fontWeight = FontWeight.Light, letterSpacing = 1.sp)
-    val timer = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
-    val bigName = TextStyle(fontSize = 38.sp, fontWeight = FontWeight.Normal, letterSpacing = (-0.5).sp, lineHeight = 44.sp)
+    val dialDigit = TextStyle(fontFamily = FontFamily(flex(460, 112f, 48f)), fontSize = 34.sp, letterSpacing = 0.sp)
+    val dialNumber = TextStyle(fontFamily = FontFamily(flex(320, 118f, 96f)), fontSize = 40.sp, letterSpacing = 1.sp, fontFeatureSettings = "tnum")
+    val timer = TextStyle(fontFamily = FontFamily(flex(620, 112f, 28f)), fontSize = 24.sp, letterSpacing = 1.sp, fontFeatureSettings = "tnum")
+    val bigName = TextStyle(fontFamily = FontFamily(flex(480, 104f, 48f)), fontSize = 38.sp, letterSpacing = (-0.5).sp, lineHeight = 44.sp)
 }
 
 /** Réglage système « réduire les animations » (échelle d'animation à 0). */

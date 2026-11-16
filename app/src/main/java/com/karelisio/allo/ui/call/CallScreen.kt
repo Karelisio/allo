@@ -192,7 +192,10 @@ fun CallScreen(
                         innerFraction = 0.46f,
                     )
                 }
-                Avatar(main.name, main.photoUri, size = lerp(136.dp, 96.dp, t), key = main.name ?: main.number)
+                val pop = remember { Animatable(if (reduce) 1f else 0.55f) }
+                LaunchedEffect(Unit) { pop.animateTo(1f, spring(dampingRatio = 0.45f, stiffness = 260f)) }
+                Avatar(main.name, main.photoUri, size = lerp(136.dp, 96.dp, t), key = main.name ?: main.number,
+                    modifier = Modifier.graphicsLayer { scaleX = pop.value; scaleY = pop.value })
             }
             Spacer(Modifier.height(14.dp))
             Text(

@@ -2,6 +2,14 @@
 
 Toutes les versions d'Allô. La section correspondant au contenu de `VERSION` sert de notes de release.
 
+## [0.4.0] - 2026-11-16
+
+Beauté.
+
+- Typographie expressive : police variable Roboto Flex (OFL) pour les chiffres du clavier, le numéro composé, la durée d'appel, le nom de l'appelant et les titres.
+- Écran d'appel : entrée animée de la fenêtre et « pop » de l'avatar au ressort.
+- Captures d'écran automatiques des écrans clés à chaque build (artefact CI), pour repérer les régressions visuelles.
+
 ## [0.3.0] - 2026-11-16
 
 Nouvelles fonctions.
