@@ -1,0 +1,103 @@
+name: Build & Release
+
+# À chaque push sur main : lit VERSION. Si le tag vX.Y.Z n'existe pas encore,
+# construit l'APK signé, crée le tag et publie une GitHub Release (APK + changelog).
+# Sinon : simple build de vérification.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Lire la version
+        id: v
+        run: |
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then echo "VERSION invalide : $VERSION"; exit 1; fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" > /dev/null; then
+            echo "Le tag v$VERSION existe déjà : build de vérification."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "Nouvelle version v$VERSION : release."
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: SDK Android
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0" "build-tools;36.1.0" > /dev/null || true
+
+      - name: Tests unitaires et de rendu
+        run: ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Vérifier les secrets de signature
+        if: steps.v.outputs.release == 'true'
+        env:
+          ALLO_KEYSTORE_BASE64: ${{ secrets.ALLO_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$ALLO_KEYSTORE_BASE64" ]; then
+            echo "::error::Secrets de signature absents (ALLO_KEYSTORE_BASE64…) : impossible de publier une release signée."
+            exit 1
+          fi
+
+      - name: APK release
+        env:
+          ALLO_KEYSTORE_BASE64: ${{ secrets.ALLO_KEYSTORE_BASE64 }}
+          ALLO_KEYSTORE_PASSWORD: ${{ secrets.ALLO_KEYSTORE_PASSWORD }}
+          ALLO_KEY_ALIAS: ${{ secrets.ALLO_KEY_ALIAS }}
+          ALLO_KEY_PASSWORD: ${{ secrets.ALLO_KEY_PASSWORD }}
+        run: |
+          ./gradlew assembleRelease --stacktrace
+          cp app/build/outputs/apk/release/app-release.apk "Allo-v${{ steps.v.outputs.version }}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Allo-v${{ steps.v.outputs.version }}-${{ github.run_number }}
+          path: Allo-v*.apk
+          retention-days: 14
+
+      - name: Notes de version
+        if: steps.v.outputs.release == 'true'
+        run: |
+          V="${{ steps.v.outputs.version }}"
+          awk -v v="$V" '
+            /^## / { if (found) exit; if (index($0, v)) { found=1; next } }
+            found { print }
+          ' CHANGELOG.md > notes.md
+          [ -s notes.md ] || echo "Version $V" > notes.md
+          cat notes.md
+
+      - name: Publier la release
+        if: steps.v.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="${{ steps.v.outputs.version }}"
+          gh release create "v$V" "Allo-v$V.apk" \
+            --title "Allô $V" \
+            --notes-file notes.md \
+            --target "$GITHUB_SHA"

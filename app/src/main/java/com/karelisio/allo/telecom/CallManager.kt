@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 
 enum class CallPhase { RINGING, DIALING, CONNECTING, ACTIVE, HOLDING, DISCONNECTING, DISCONNECTED }
@@ -74,6 +75,13 @@ object CallManager {
 
     private data class NumberLookupResult(val lookup: NumberLookup?)
 
+    private var simCache: Pair<Long, List<com.karelisio.allo.data.Sim>>? = null
+    private fun cachedSims(): List<com.karelisio.allo.data.Sim> {
+        val c = simCache
+        if (c != null && System.currentTimeMillis() - c.first < 30_000) return c.second
+        return Graph.sims.sims().also { simCache = System.currentTimeMillis() to it }
+    }
+
     fun add(call: Call) {
         if (calls.contains(call)) return
         calls += call
@@ -112,7 +120,7 @@ object CallManager {
         if (n.isEmpty() || lookups.containsKey(PhoneNumbers.key(n))) return
         Graph.scope.launch(Dispatchers.IO) {
             lookups[PhoneNumbers.key(n)] = NumberLookupResult(Graph.contacts.lookup(n))
-            publish()
+            withContext(Dispatchers.Main) { publish() }
         }
     }
 
@@ -134,7 +142,7 @@ object CallManager {
         val d = call.details ?: return null
         val number = numberOf(call)
         val lk = lookups[PhoneNumbers.key(number)]?.lookup
-        val sims = Graph.sims.sims()
+        val sims = cachedSims()
         val sim = if (sims.size > 1) sims.firstOrNull { it.accountId == d.accountHandle?.id } else null
         val screening = ScreeningResults.get(number)
         val isIncoming = if (Build.VERSION.SDK_INT >= 29) d.callDirection == Call.Details.DIRECTION_INCOMING else phaseOf(call) == CallPhase.RINGING

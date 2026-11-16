@@ -277,7 +277,7 @@ private fun BigRoundButton(icon: ImageVector, label: String, color: Color, onCli
 @Composable
 private fun AnswerSwipe(onAnswer: () -> Unit, onDecline: () -> Unit, onProgress: (Float) -> Unit, hint: Color) {
     val density = LocalDensity.current
-    val maxPx = with(density) { 110.dp.toPx() }
+    val maxPx = with(density) { 95.dp.toPx() }
     val offset = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
     val haptics = rememberHaptics()
@@ -294,7 +294,7 @@ private fun AnswerSwipe(onAnswer: () -> Unit, onDecline: () -> Unit, onProgress:
         else -> androidx.compose.ui.graphics.lerp(Color.White, DeclineRed, progress)
     }
     val iconTint = if (abs(progress) > 0.4f) Color.White else AnswerGreen
-    Box(Modifier.fillMaxWidth().height(250.dp), contentAlignment = Alignment.Center) {
+    Box(Modifier.fillMaxWidth().height(220.dp), contentAlignment = Alignment.Center) {
         Column(Modifier.align(Alignment.TopCenter).graphicsLayer { alpha = 1f - abs(progress) }, horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(Icons.Rounded.KeyboardArrowUp, null, tint = hint.copy(0.7f))
             Text("Glisser pour répondre", style = MaterialTheme.typography.labelMedium, color = hint.copy(0.8f))

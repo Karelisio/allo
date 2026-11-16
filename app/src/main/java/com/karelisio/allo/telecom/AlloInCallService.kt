@@ -46,7 +46,7 @@ class AlloInCallService : InCallService() {
     }
 
     private fun onIncoming(call: Call) {
-        Graph.scope.launch {
+        Graph.scope.launch(kotlinx.coroutines.Dispatchers.Main) {
             val number = call.details?.handle?.schemeSpecificPart
             // Filet de sécurité : la liste noire s'applique même si le filtrage n'a pas été appelé.
             if (ScreeningResults.get(number) == null) {

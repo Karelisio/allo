@@ -29,8 +29,8 @@ android {
         targetSdk = 36
         versionCode = appVersionCode
         versionName = appVersionName
-        buildConfigField("String", "GITHUB_REPO", "\"karelisio/allo\"")
-        buildConfigField("String", "RELEASES_REPO", "\"karelisio/allo-releases\"")
+        // Dépôt public : les APK sont publiés dans ses GitHub Releases.
+        buildConfigField("String", "RELEASES_REPO", "\"Karelisio/allo\"")
     }
 
     signingConfigs {
@@ -69,6 +69,11 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            // Miroir Maven Central pour les jars Android de Robolectric.
+            it.systemProperty("robolectric.dependency.repo.url", "https://maven-central.storage-download.googleapis.com/maven2")
+            it.maxHeapSize = "3g"
+        }
     }
 
     packaging {
