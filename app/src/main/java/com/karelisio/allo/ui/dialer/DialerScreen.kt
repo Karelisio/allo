@@ -142,7 +142,7 @@ fun highlight(text: String, ranges: List<IntRange>, color: Color): AnnotatedStri
 }
 
 @Composable
-fun DialerScreen(vm: MainViewModel, nav: NavHostController, initial: String) {
+fun DialerScreen(vm: MainViewModel, nav: NavHostController, initial: String, addCall: Boolean = false) {
     val ctx = LocalContext.current
     val caller = LocalCaller.current
     val haptics = rememberHaptics()
@@ -171,6 +171,8 @@ fun DialerScreen(vm: MainViewModel, nav: NavHostController, initial: String) {
         if (PhoneNumbers.isSpecialCode(number)) { Dialer.place(ctx, number, simChoice?.handle); return }
         val sim = simChoice
         if (sim != null) caller.callWith(number, sim) else caller.call(number, lookupKey)
+        // En mode « ajouter un appel », on revient à l'écran d'appel.
+        if (addCall) { typed = ""; nav.back() }
     }
 
     Column(
@@ -179,6 +181,7 @@ fun DialerScreen(vm: MainViewModel, nav: NavHostController, initial: String) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(4.dp)) {
             IconButton(onClick = { nav.back() }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Retour") }
+            if (addCall) Text("Ajouter un appel", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.weight(1f))
             if (sims.size > 1) {
                 AssistChip(

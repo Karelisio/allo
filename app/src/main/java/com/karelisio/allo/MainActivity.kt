@@ -80,24 +80,29 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent?) {
         intent ?: return
+        // Test automatisé (CI sur émulateur) : passe l'onboarding. Sans effet sur les données.
+        if (intent.getBooleanExtra(EXTRA_SKIP_ONBOARDING, false)) {
+            lifecycleScope.launch { Graph.settings.setOnboardingDone(); onboardingDone.value = true; ready = true }
+        }
         val req = when (intent.action) {
             Intent.ACTION_DIAL, Intent.ACTION_VIEW, "android.intent.action.CALL_BUTTON" -> {
                 if (intent.type == "vnd.android.cursor.dir/calls") LaunchRequest.Tab(TAB_LOG)
                 else LaunchRequest.Dial(intent.data?.schemeSpecificPart?.takeIf { intent.data?.scheme == "tel" } ?: "")
             }
-            ACTION_ADD_CALL -> LaunchRequest.Dial("")
+            ACTION_ADD_CALL -> LaunchRequest.Dial("", addCall = true)
             else -> intent.getStringExtra(EXTRA_TAB)?.let { LaunchRequest.Tab(it) }
         }
         if (req != null) pendingRoute.value = req
     }
 
     sealed interface LaunchRequest {
-        data class Dial(val number: String) : LaunchRequest
+        data class Dial(val number: String, val addCall: Boolean = false) : LaunchRequest
         data class Tab(val tab: String) : LaunchRequest
     }
 
     companion object {
         const val EXTRA_TAB = "tab"
+        const val EXTRA_SKIP_ONBOARDING = "allo.skip_onboarding"
         const val TAB_LOG = "log"
         const val TAB_FAVORITES = "favorites"
         const val TAB_CONTACTS = "contacts"

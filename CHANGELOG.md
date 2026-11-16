@@ -2,6 +2,15 @@
 
 Toutes les versions d'Allô. La section correspondant au contenu de `VERSION` sert de notes de release.
 
+## [0.2.0] - 2026-11-16
+
+Fiabilité.
+
+- Les rappels « Rappelle-moi dans… » survivent au redémarrage du téléphone (reprogrammés au démarrage).
+- Appels manqués : notification de secours si le système ne prévient pas Allô.
+- Ajouter un appel : le clavier se referme après l'appel et l'écran d'appel revient.
+- Nouveau test automatique sur émulateur avant chaque release : démarrage de l'APK final, parcours des écrans, appel entrant simulé (déverrouillé et verrouillé), captures d'écran. La release est bloquée au moindre crash.
+
 ## [0.1.1] - 2026-11-16
 
 - Correction du crash au lancement après l'onboarding (affichage des heures du journal).

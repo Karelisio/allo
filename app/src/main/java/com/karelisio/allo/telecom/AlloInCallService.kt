@@ -78,7 +78,12 @@ class AlloInCallService : InCallService() {
 
     override fun onCallRemoved(call: Call) {
         super.onCallRemoved(call)
+        val missed = call.details?.disconnectCause?.code == android.telecom.DisconnectCause.MISSED
         CallManager.remove(call)
+        if (missed) Graph.scope.launch {
+            kotlinx.coroutines.delay(2_500) // laisse le journal s'écrire
+            if (Graph.settings.current().missedNotification) runCatching { com.karelisio.allo.notifications.Notifications.refreshMissed(this@AlloInCallService) }
+        }
     }
 
     override fun onCallAudioStateChanged(audioState: CallAudioState?) {

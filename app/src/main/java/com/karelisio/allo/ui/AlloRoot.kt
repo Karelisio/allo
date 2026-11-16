@@ -49,7 +49,7 @@ import com.karelisio.allo.update.UpdateHost
 
 object Routes {
     const val HOME = "home"
-    fun dialer(number: String = "") = "dialer?number=${Uri.encode(number)}"
+    fun dialer(number: String = "", addCall: Boolean = false) = "dialer?number=${Uri.encode(number)}&add=$addCall"
     fun contact(lookupKey: String, sk: String? = null) = "contact/${Uri.encode(lookupKey)}?sk=${Uri.encode(sk ?: lookupKey)}"
     fun number(number: String, sk: String? = null) = "number/${Uri.encode(number.ifEmpty { "-" })}?sk=${Uri.encode(sk ?: number)}"
     fun edit(lookupKey: String? = null, number: String? = null) = "edit?lookupKey=${Uri.encode(lookupKey ?: "")}&number=${Uri.encode(number ?: "")}"
@@ -80,7 +80,7 @@ fun AlloRoot(
     val caller = rememberCaller()
     LaunchedEffect(launch) {
         when (launch) {
-            is MainActivity.LaunchRequest.Dial -> { nav.navigate(Routes.dialer(launch.number)) { launchSingleTop = true }; onLaunchConsumed() }
+            is MainActivity.LaunchRequest.Dial -> { nav.navigate(Routes.dialer(launch.number, launch.addCall)) { launchSingleTop = true }; onLaunchConsumed() }
             is MainActivity.LaunchRequest.Tab -> {
                 if (launch.tab == MainActivity.TAB_BLOCKED) nav.navigate(Routes.BLOCKING) { launchSingleTop = true }
                 else { nav.popBackStack(Routes.HOME, false); vm.requestedTab.value = launch.tab }
@@ -101,8 +101,11 @@ fun AlloRoot(
                     popExitTransition = { slideOutHorizontally(spring(dampingRatio = 0.9f, stiffness = 500f)) { it / 6 } + fadeOut() },
                 ) {
                     screen(Routes.HOME) { HomeScreen(vm, nav, isDefaultDialer) }
-                    screen("dialer?number={number}", listOf(navArgument("number") { type = NavType.StringType; defaultValue = "" })) {
-                        DialerScreen(vm, nav, it.arguments?.getString("number").orEmpty())
+                    screen("dialer?number={number}&add={add}", listOf(
+                        navArgument("number") { type = NavType.StringType; defaultValue = "" },
+                        navArgument("add") { type = NavType.BoolType; defaultValue = false },
+                    )) {
+                        DialerScreen(vm, nav, it.arguments?.getString("number").orEmpty(), it.arguments?.getBoolean("add") == true)
                     }
                     screen("contact/{lookupKey}?sk={sk}", listOf(navArgument("lookupKey") { type = NavType.StringType }, navArgument("sk") { type = NavType.StringType; defaultValue = "" })) {
                         ContactDetailScreen(vm, nav, it.arguments?.getString("lookupKey").orEmpty(), it.arguments?.getString("sk"))

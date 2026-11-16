@@ -74,6 +74,7 @@ class MissedCallReceiver : BroadcastReceiver() {
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val number = intent.getStringExtra(EXTRA_NUMBER) ?: return
+        forget(context, number)
         Notifications.notifyReminder(context, number, intent.getStringExtra(EXTRA_NAME))
     }
 
@@ -81,17 +82,54 @@ class ReminderReceiver : BroadcastReceiver() {
         const val EXTRA_NUMBER = "number"
         const val EXTRA_NAME = "name"
 
+        private fun prefs(c: Context) = c.getSharedPreferences("reminders", Context.MODE_PRIVATE)
+
+        /** Rappels en attente : « horodatage|numéro|nom ». */
+        fun pending(c: Context): List<Triple<Long, String, String?>> = prefs(c).getStringSet("items", emptySet()).orEmpty().mapNotNull {
+            val p = it.split('|', limit = 3)
+            val t = p.getOrNull(0)?.toLongOrNull() ?: return@mapNotNull null
+            Triple(t, p.getOrNull(1) ?: return@mapNotNull null, p.getOrNull(2)?.ifEmpty { null })
+        }
+
+        private fun save(c: Context, items: List<Triple<Long, String, String?>>) =
+            prefs(c).edit().putStringSet("items", items.map { "${it.first}|${it.second}|${it.third.orEmpty()}" }.toSet()).apply()
+
+        fun forget(c: Context, number: String) = save(c, pending(c).filter { it.second != number })
+
+        /** Après un redémarrage, les alarmes sont perdues : on les reprogramme (ou on notifie si l'heure est passée). */
+        fun reschedule(c: Context) {
+            val now = System.currentTimeMillis()
+            pending(c).forEach { (at, number, name) ->
+                if (at <= now) { forget(c, number); Notifications.notifyReminder(c, number, name) }
+                else setAlarm(c, number, name, at)
+            }
+        }
+
         fun schedule(context: Context, number: String, name: String?, delayMin: Int) {
+            val at = System.currentTimeMillis() + delayMin * 60_000L
+            save(context, pending(context).filter { it.second != number } + Triple(at, number, name))
+            setAlarm(context, number, name, at)
+        }
+
+        private fun setAlarm(context: Context, number: String, name: String?, at: Long) {
             val am = context.getSystemService(AlarmManager::class.java)
             val pi = PendingIntent.getBroadcast(context, number.hashCode(),
                 Intent(context, ReminderReceiver::class.java).putExtra(EXTRA_NUMBER, number).putExtra(EXTRA_NAME, name),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-            val at = System.currentTimeMillis() + delayMin * 60_000L
             val exact = Build.VERSION.SDK_INT < 31 || am.canScheduleExactAlarms()
             runCatching {
                 if (exact) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi)
                 else am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi)
             }
+        }
+    }
+}
+
+/** Reprogramme les rappels après un redémarrage. */
+class BootReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == "android.intent.action.QUICKBOOT_POWERON") {
+            ReminderReceiver.reschedule(context)
         }
     }
 }
