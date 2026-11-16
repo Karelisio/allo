@@ -21,7 +21,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
+import com.karelisio.allo.ui.components.AlloListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -125,7 +125,7 @@ fun BlockingScreen(vm: MainViewModel, nav: NavHostController) {
         section("Préfixes de démarchage (ARCEP)")
         items(prefixes.size) { i ->
             val p = prefixes[i]
-            ListItem(
+            AlloListItem(
                 headlineContent = { Text("${p.prefix} · +33 ${p.prefix.drop(1)}") },
                 trailingContent = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -147,7 +147,7 @@ fun BlockingScreen(vm: MainViewModel, nav: NavHostController) {
         section("Liste noire")
         items(black.size) { i ->
             val e = black[i]
-            ListItem(
+            AlloListItem(
                 headlineContent = { Text(if (e.isPrefix) "Préfixe ${e.pattern}" else PhoneNumbers.format(e.pattern)) },
                 supportingContent = e.label?.let { { Text(it) } },
                 trailingContent = { IconButton(onClick = { scope.launch { Graph.block.removeBlack(e.id) } }) { Icon(Icons.Rounded.Delete, "Retirer") } },
@@ -159,7 +159,7 @@ fun BlockingScreen(vm: MainViewModel, nav: NavHostController) {
         section("Liste blanche (toujours autorisés)")
         items(white.size) { i ->
             val e = white[i]
-            ListItem(
+            AlloListItem(
                 headlineContent = { Text(if (e.isPrefix) "Préfixe ${e.pattern}" else PhoneNumbers.format(e.pattern)) },
                 trailingContent = { IconButton(onClick = { scope.launch { Graph.block.removeWhite(e.id) } }) { Icon(Icons.Rounded.Delete, "Retirer") } },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent), modifier = Modifier.padding(horizontal = 8.dp),
@@ -174,7 +174,7 @@ fun BlockingScreen(vm: MainViewModel, nav: NavHostController) {
             val cat = runCatching { BlockCategory.valueOf(b.category) }.getOrNull()
             val act = runCatching { BlockAction.valueOf(b.action) }.getOrNull()
             Cascade(i) {
-                ListItem(
+                AlloListItem(
                     headlineContent = { Text(if (b.number.isBlank()) "Numéro masqué" else PhoneNumbers.format(b.number)) },
                     supportingContent = {
                         Text(listOfNotNull(

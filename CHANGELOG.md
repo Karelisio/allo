@@ -2,6 +2,14 @@
 
 Toutes les versions d'Allô. La section correspondant au contenu de `VERSION` sert de notes de release.
 
+## [0.5.0] - 2026-11-16
+
+Qualité.
+
+- Tests de rendu de tous les écrans (réglages, blocage, autorisations, fiabilité, messagerie, clavier, onboarding, en clair et en sombre) : 61 tests.
+- Plus aucun avertissement de compilation (API Material 3 centralisées, icônes AutoMirrored).
+- Rappel : chaque release passe d'abord le test sur émulateur (démarrage, écrans, appels simulés).
+
 ## [0.4.0] - 2026-11-16
 
 Beauté.

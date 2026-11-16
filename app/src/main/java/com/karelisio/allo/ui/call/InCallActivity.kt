@@ -27,7 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
+import com.karelisio.allo.ui.components.AlloListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -145,7 +145,7 @@ class InCallActivity : ComponentActivity() {
         ModalBottomSheet(onDismissRequest = onDismiss) {
             Text("Répondre par SMS", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
             replies.forEach { r ->
-                ListItem(headlineContent = { Text(r.text) }, modifier = Modifier.clickable { send(r.text) })
+                AlloListItem(headlineContent = { Text(r.text) }, modifier = Modifier.clickable { send(r.text) })
             }
             Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                 OutlinedTextField(

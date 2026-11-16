@@ -26,7 +26,7 @@ import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Numbers
 import androidx.compose.material.icons.rounded.PhoneAndroid
-import androidx.compose.material.icons.rounded.PhoneCallback
+import androidx.compose.material.icons.automirrored.rounded.PhoneCallback
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.RocketLaunch
 import androidx.compose.material.icons.rounded.Shield
@@ -75,7 +75,7 @@ object Permissions {
         add(runtime("call_phone", "Passer des appels", "Pour appeler directement depuis le clavier, le journal et les contacts.", Icons.Rounded.Call, Manifest.permission.CALL_PHONE))
         add(runtime("phone_state", "État du téléphone", "Pour connaître tes SIM, la messagerie vocale et l'état des appels.", Icons.Rounded.SimCard, Manifest.permission.READ_PHONE_STATE))
         add(runtime("phone_numbers", "Numéros des SIM", "Pour afficher le numéro de chaque SIM en double SIM.", Icons.Rounded.Numbers, Manifest.permission.READ_PHONE_NUMBERS))
-        add(runtime("answer", "Répondre aux appels", "Pour décrocher et raccrocher depuis les notifications.", Icons.Rounded.PhoneCallback, Manifest.permission.ANSWER_PHONE_CALLS))
+        add(runtime("answer", "Répondre aux appels", "Pour décrocher et raccrocher depuis les notifications.", Icons.AutoMirrored.Rounded.PhoneCallback, Manifest.permission.ANSWER_PHONE_CALLS))
         add(runtime("call_log", "Journal d'appels", "Pour afficher, regrouper et nettoyer ton historique d'appels.", Icons.Rounded.History,
             Manifest.permission.READ_CALL_LOG, Manifest.permission.WRITE_CALL_LOG))
         add(runtime("contacts", "Contacts", "Pour afficher les noms, les photos et modifier tes contacts.", Icons.Rounded.Contacts,

@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -58,7 +57,7 @@ object Updater {
             version = tag.removePrefix("v"),
             notes = o["body"]?.jsonPrimitive?.content.orEmpty(),
             apkUrl = asset["browser_download_url"]?.jsonPrimitive?.content ?: return null,
-            size = (asset as JsonObject)["size"]?.jsonPrimitive?.longOrNull ?: 0L,
+            size = asset["size"]?.jsonPrimitive?.longOrNull ?: 0L,
         )
     }
 

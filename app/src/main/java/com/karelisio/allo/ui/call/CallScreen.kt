@@ -44,7 +44,7 @@ import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.Call
 import androidx.compose.material.icons.rounded.CallEnd
-import androidx.compose.material.icons.rounded.CallMerge
+import androidx.compose.material.icons.automirrored.rounded.CallMerge
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Dialpad
@@ -58,7 +58,7 @@ import androidx.compose.material.icons.rounded.Sms
 import androidx.compose.material.icons.rounded.SwapCalls
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
+import com.karelisio.allo.ui.components.AlloListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
@@ -377,7 +377,7 @@ private fun OngoingControls(calls: List<CallInfo>, main: CallInfo, audio: AudioU
                     })
                     add(ControlSpec(Icons.Rounded.Pause, "Attente", main.phase == CallPhase.HOLDING, main.canHold && !two, actions.onToggleHold))
                     add(ControlSpec(Icons.Rounded.AddIcCall, "Ajouter", false, !two, actions.onAddCall))
-                    if (two) add(ControlSpec(Icons.Rounded.CallMerge, "Fusionner", false, main.canMerge || others.any { it.canMerge }, actions.onMerge))
+                    if (two) add(ControlSpec(Icons.AutoMirrored.Rounded.CallMerge, "Fusionner", false, main.canMerge || others.any { it.canMerge }, actions.onMerge))
                     else add(ControlSpec(Icons.Rounded.SwapCalls, "Basculer", false, false, actions.onSwap))
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -404,7 +404,7 @@ private fun OngoingControls(calls: List<CallInfo>, main: CallInfo, audio: AudioU
                     AudioRoute.CAR -> Icons.Rounded.DirectionsCar
                 }
                 val selected = o.route == audio.current.route && (o.address == null || o.address == audio.current.address)
-                ListItem(
+                AlloListItem(
                     headlineContent = { Text(o.name) },
                     leadingContent = { Icon(icon, null) },
                     trailingContent = { if (selected) Icon(Icons.Rounded.Check, null, tint = MaterialTheme.colorScheme.primary) },

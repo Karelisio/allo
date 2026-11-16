@@ -26,7 +26,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
+import com.karelisio.allo.ui.components.AlloListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -146,7 +146,7 @@ fun StatsCard(count: Int, totalSec: Long) {
 @Composable
 fun HistoryRow(e: com.karelisio.allo.core.CallEntry) {
     val (ic, tint) = kindIcon(e.kind)
-    ListItem(
+    AlloListItem(
         leadingContent = { Icon(ic, null, tint = tint) },
         headlineContent = { Text(kindLabel(e.kind)) },
         supportingContent = {

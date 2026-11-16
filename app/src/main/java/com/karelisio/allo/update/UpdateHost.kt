@@ -77,7 +77,7 @@ fun UpdateHost() {
         is UpdateState.Installing -> s.release
         else -> null
     } ?: return
-    val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    @Suppress("DEPRECATION") val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(onDismissRequest = { Updater.dismiss() }, sheetState = sheet) {
         Column(Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp)) {
             Text("Allô ${release.version} est disponible", style = MaterialTheme.typography.headlineSmall)

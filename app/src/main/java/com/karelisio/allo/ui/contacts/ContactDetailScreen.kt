@@ -46,7 +46,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconToggleButton
-import androidx.compose.material3.ListItem
+import com.karelisio.allo.ui.components.AlloListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -174,7 +174,7 @@ fun ContactDetailScreen(vm: MainViewModel, nav: NavHostController, lookupKey: St
             item {
                 SectionCard {
                     d.phones.forEach { p ->
-                        ListItem(
+                        AlloListItem(
                             headlineContent = { Text(PhoneNumbers.format(p.number)) },
                             supportingContent = { Text(p.label + if (p.isPrimary) " · par défaut" else "") },
                             leadingContent = { Icon(Icons.Rounded.Call, null, tint = MaterialTheme.colorScheme.primary) },
@@ -184,7 +184,7 @@ fun ContactDetailScreen(vm: MainViewModel, nav: NavHostController, lookupKey: St
                         )
                     }
                     d.emails.forEach { e ->
-                        ListItem(
+                        AlloListItem(
                             headlineContent = { Text(e.address) }, supportingContent = { Text(e.label) },
                             leadingContent = { Icon(Icons.Rounded.Email, null, tint = MaterialTheme.colorScheme.primary) },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -200,7 +200,7 @@ fun ContactDetailScreen(vm: MainViewModel, nav: NavHostController, lookupKey: St
                     val ringName = remember(d.ringtone) {
                         d.ringtone?.let { runCatching { RingtoneManager.getRingtone(ctx, Uri.parse(it))?.getTitle(ctx) }.getOrNull() } ?: "Par défaut"
                     }
-                    ListItem(
+                    AlloListItem(
                         headlineContent = { Text("Sonnerie") }, supportingContent = { Text(ringName) },
                         leadingContent = { Icon(Icons.Rounded.MusicNote, null) },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -216,7 +216,7 @@ fun ContactDetailScreen(vm: MainViewModel, nav: NavHostController, lookupKey: St
                     if (sims.size > 1) {
                         val pref = sims.firstOrNull { it.accountId == setting?.preferredAccountId }
                         Column {
-                            ListItem(
+                            AlloListItem(
                                 headlineContent = { Text("SIM préférée") },
                                 supportingContent = { Text(pref?.let { "${it.shortLabel} · ${it.label}" } ?: "Demander / SIM par défaut") },
                                 leadingContent = { Icon(Icons.Rounded.SimCard, null) },
@@ -233,7 +233,7 @@ fun ContactDetailScreen(vm: MainViewModel, nav: NavHostController, lookupKey: St
                             }
                         }
                     }
-                    ListItem(
+                    AlloListItem(
                         headlineContent = { Text("Bloquer ce contact") },
                         leadingContent = { Icon(Icons.Rounded.Block, null, tint = MaterialTheme.colorScheme.error) },
                         trailingContent = {

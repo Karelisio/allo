@@ -16,7 +16,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.ErrorOutline
-import androidx.compose.material.icons.rounded.HelpOutline
+import androidx.compose.material.icons.automirrored.rounded.HelpOutline
 import androidx.compose.material.icons.rounded.PhoneInTalk
 import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material3.Button
@@ -27,7 +27,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearWavyProgressIndicator
-import androidx.compose.material3.ListItem
+import com.karelisio.allo.ui.components.AlloListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -105,7 +105,7 @@ private fun StatusIcon(ok: Boolean?) {
     when (ok) {
         true -> Icon(Icons.Rounded.CheckCircle, "OK", tint = MaterialTheme.colorScheme.primary)
         false -> Icon(Icons.Rounded.ErrorOutline, "À corriger", tint = MaterialTheme.colorScheme.error)
-        null -> Icon(Icons.Rounded.HelpOutline, "Inconnu", tint = MaterialTheme.colorScheme.outline)
+        null -> Icon(Icons.AutoMirrored.Rounded.HelpOutline, "Inconnu", tint = MaterialTheme.colorScheme.outline)
     }
 }
 
@@ -135,7 +135,7 @@ fun PermissionsScreen(vm: MainViewModel, nav: NavHostController) {
 
 @Composable
 private fun PermRow(item: PermItem, granted: Boolean, onFix: () -> Unit) {
-    ListItem(
+    AlloListItem(
         leadingContent = { Icon(item.icon, null) },
         headlineContent = { Text(item.title) },
         supportingContent = { Text(item.description) },
@@ -210,7 +210,7 @@ fun ReliabilityScreen(vm: MainViewModel, nav: NavHostController) {
 
 @Composable
 private fun CheckRow(title: String, subtitle: String, ok: Boolean?, onClick: () -> Unit) {
-    ListItem(
+    AlloListItem(
         headlineContent = { Text(title) }, supportingContent = { Text(subtitle) },
         trailingContent = { StatusIcon(ok) },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -235,7 +235,7 @@ fun EchoSettingsScreen(vm: MainViewModel, nav: NavHostController) {
         items(contacts.size, key = { contacts[it].id }) { i ->
             val c = contacts[i]
             val on = c.lookupKey in s.echoContacts
-            ListItem(
+            AlloListItem(
                 leadingContent = { Avatar(c.name, c.thumbUri, size = 40.dp, key = c.name) },
                 headlineContent = { Text(c.name) },
                 trailingContent = { Checkbox(on, null) },

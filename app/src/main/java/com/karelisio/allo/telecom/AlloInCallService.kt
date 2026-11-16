@@ -86,6 +86,10 @@ class AlloInCallService : InCallService() {
         }
     }
 
+    // API audio « CallAudioState » : dépréciée en API 34 (CallEndpoint) mais toujours fonctionnelle et
+    // nécessaire pour Android 10 à 13. Gardée volontairement pour une seule logique sur toutes les versions.
+    @Deprecated("CallAudioState, voir CallManager")
+    @Suppress("DEPRECATION")
     override fun onCallAudioStateChanged(audioState: CallAudioState?) {
         super.onCallAudioStateChanged(audioState)
         CallManager.onAudioState(audioState)

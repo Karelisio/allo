@@ -235,6 +235,7 @@ object CallManager {
         } else selectOutput(AudioOutput(AudioRoute.SPEAKER, "Haut-parleur"))
     }
 
+    @Suppress("DEPRECATION") // setAudioRoute / requestBluetoothAudio : voir AlloInCallService
     fun selectOutput(o: AudioOutput) {
         val s = service ?: return
         when (o.route) {
