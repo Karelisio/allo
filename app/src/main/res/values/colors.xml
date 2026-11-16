@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#1E6B3C</color>
+    <color name="splash_background">#F6FBF3</color>
+    <color name="logo_bubble">#E9F7EC</color>
+    <color name="logo_handset">#0D3B20</color>
+</resources>

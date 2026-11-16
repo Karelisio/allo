@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut android:shortcutId="dial" android:enabled="true" android:icon="@drawable/ic_shortcut_dial" android:shortcutShortLabel="@string/shortcut_dial">
+        <intent android:action="android.intent.action.DIAL" android:targetPackage="com.karelisio.allo" android:targetClass="com.karelisio.allo.MainActivity" />
+    </shortcut>
+</shortcuts>
