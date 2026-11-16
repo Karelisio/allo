@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Allô</string>
+    <string name="widget_name">Favoris Allô</string>
+    <string name="widget_description">Appelle tes favoris d\'un geste</string>
+    <string name="shortcut_dial">Clavier</string>
+</resources>
