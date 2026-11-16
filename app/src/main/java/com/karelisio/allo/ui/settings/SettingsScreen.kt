@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Backup
+import androidx.compose.material.icons.rounded.Contrast
+import androidx.compose.material.icons.rounded.Insights
+import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.ChatBubble
 import androidx.compose.material.icons.rounded.Favorite
@@ -80,10 +83,12 @@ fun SettingsScreen(vm: MainViewModel, nav: NavHostController) {
         section("Appel entrant")
         item { SwitchRow("Notification quand l'écran est déverrouillé", s.headsUpWhenUnlocked, { v -> upd { it.copy(headsUpWhenUnlocked = v) } },
             "Sinon, l'écran d'appel s'ouvre en plein écran", Icons.Rounded.NotificationsActive) }
+        item { SwitchRow("Écran d'appel aux couleurs du système", s.callScreenSystemTheme, { v -> upd { it.copy(callScreenSystemTheme = v) } },
+            "Sinon, l'écran d'appel reste sombre", Icons.Rounded.Contrast) }
         item { SwitchRow("Retourner pour couper la sonnerie", s.flipToSilence, { v -> upd { it.copy(flipToSilence = v) } }, icon = Icons.Rounded.ScreenRotation) }
         item { NavRow("Réponses rapides par SMS", icon = Icons.Rounded.Sms) { nav.navigate(Routes.REPLIES) } }
         item {
-            androidx.compose.material3.ListItem(
+            com.karelisio.allo.ui.components.AlloListItem(
                 headlineContent = { Text("« Rappelle-moi dans… »") },
                 leadingContent = { androidx.compose.material3.Icon(Icons.Rounded.Timer, null) },
                 supportingContent = {
@@ -95,6 +100,9 @@ fun SettingsScreen(vm: MainViewModel, nav: NavHostController) {
                 colors = androidx.compose.material3.ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
             )
         }
+
+        item { NavRow("Sonnerie par groupe de contacts", "Famille, travail…", Icons.Rounded.MusicNote) { nav.navigate(Routes.RINGTONE_GROUPS) } }
+        item { NavRow("Statistiques d'appels", "Calculées sur ton téléphone, rien n'est envoyé", Icons.Rounded.Insights) { nav.navigate(Routes.STATS) } }
 
         section("Blocage et notifications")
         item { NavRow("Blocage du démarchage", "Préfixes, masqués, inconnus, listes", Icons.Rounded.Block) { nav.navigate(Routes.BLOCKING) } }

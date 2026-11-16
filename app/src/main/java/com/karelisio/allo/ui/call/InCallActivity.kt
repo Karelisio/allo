@@ -71,7 +71,14 @@ class InCallActivity : ComponentActivity() {
         handle(intent)
         val isPreview = preview
         setContent {
-            AlloTheme(dark = true) {
+            val settings by Graph.settings.settings.collectAsState(initial = null)
+            val system = settings?.callScreenSystemTheme == true
+            val dark = if (system) androidx.compose.foundation.isSystemInDarkTheme() else true
+            LaunchedEffect(dark) {
+                val style = if (dark) SystemBarStyle.dark(0) else SystemBarStyle.light(0, 0)
+                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+            }
+            AlloTheme(dark = dark) {
                 if (isPreview) PreviewHost(onFinished = { finishAndRemoveTask() })
                 else LiveHost(onFinished = { finishAndRemoveTask() })
             }

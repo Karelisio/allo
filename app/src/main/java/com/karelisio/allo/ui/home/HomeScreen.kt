@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Dialpad
 import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Insights
 import androidx.compose.material.icons.rounded.People
 import androidx.compose.material.icons.rounded.PhoneDisabled
 import androidx.compose.material.icons.rounded.Settings
@@ -104,7 +105,10 @@ fun HomeScreen(vm: MainViewModel, nav: NavHostController, isDefaultDialer: Boole
                                 style = MaterialTheme.typography.headlineMedium)
                         }
                     },
-                    actions = { IconButton(onClick = { nav.navigate(Routes.SETTINGS) }) { Icon(Icons.Rounded.Settings, "Réglages") } },
+                    actions = {
+                        IconButton(onClick = { nav.navigate(Routes.STATS) }) { Icon(Icons.Rounded.Insights, "Statistiques") }
+                        IconButton(onClick = { nav.navigate(Routes.SETTINGS) }) { Icon(Icons.Rounded.Settings, "Réglages") }
+                    },
                     scrollBehavior = scroll,
                 )
                 AnimatedVisibility(!isDefaultDialer, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {

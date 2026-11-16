@@ -130,6 +130,8 @@ fun AlloRoot(
                     screen(Routes.ECHO) { EchoSettingsScreen(vm, nav) }
                     screen(Routes.ABOUT) { AboutScreen(nav) }
                     screen(Routes.VOICEMAIL) { com.karelisio.allo.ui.log.VoicemailScreen(vm, nav) }
+                    screen(Routes.STATS) { com.karelisio.allo.ui.settings.StatsScreen(vm, nav) }
+                    screen(Routes.RINGTONE_GROUPS) { com.karelisio.allo.ui.settings.GroupRingtoneScreen(nav) }
                 }
             }
         }

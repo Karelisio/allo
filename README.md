@@ -5,6 +5,8 @@ Appli Téléphone Android native qui remplace celle de MagicOS (Honor) : clavier
 
 Kotlin · Jetpack Compose · Material 3 Expressive · `com.karelisio.allo` · Android 10+ (minSdk 29, targetSdk 36).
 
+Police : Roboto Flex (SIL Open Font License, voir `FONT_LICENSE_OFL.txt`).
+
 ## Fonctionnalités
 
 - **Rôle Téléphone par défaut** (`RoleManager.ROLE_DIALER`) : demandé à l'onboarding et vérifié au retour. Si le rôle est retiré, un bandeau propose de le reprendre.
@@ -19,7 +21,11 @@ Kotlin · Jetpack Compose · Material 3 Expressive · `com.karelisio.allo` · An
   - Préfixes ARCEP (0162, 0163, 0270, 0271, 0377, 0378, 0424, 0425, 0568, 0569, 0948, 0949), au format national et +33. La liste est modifiable.
   - Pour chaque catégorie (démarchage, masqués, inconnus, liste noire) : bloquer, sonnerie silencieuse avec étiquette, ou laisser passer.
   - Liste noire et liste blanche, journal des appels filtrés et compteur du mois.
-- **Notifications** : appels manqués groupés (Rappeler, SMS, Bloquer), notification discrète à chaque blocage, rappels.
+- **Notifications** : appels manqués groupés (Rappeler, SMS, Bloquer), notification discrète à chaque blocage, rappels (conservés après un redémarrage).
+- **Messagerie vocale visuelle** : écoute, transcription et suppression des messages fournis au système par l'opérateur ; sinon, appel de la messagerie.
+- **Journal** : sélection multiple pour supprimer plusieurs appels, recherches récentes.
+- **Statistiques locales** : nombre d'appels, temps au téléphone, répartition par jour de la semaine, personnes avec qui tu passes le plus de temps. Tout est calculé sur le téléphone.
+- **Sonnerie par groupe de contacts** (famille, travail…), et écran d'appel sombre ou aux couleurs du système.
 - **Widget Glance** de favoris (2x2 à 4x4, couleurs dynamiques) et **raccourcis d'appli** vers les 4 premiers favoris.
 - **Intégrations** :
   - Bulle : les notifications d'appel restent des CallStyle standards, et une option laisse Bulle gérer l'appel entrant quand l'écran est déverrouillé.
@@ -99,7 +105,7 @@ Garde le `.jks` hors du dépôt, en lieu sûr : le `.gitignore` exclut `*.jks`, 
 1. Modifier `VERSION` (par ex. `0.2.0`) et ajouter une section `## [0.2.0]` dans `CHANGELOG.md`.
 2. Pousser sur `main`.
 
-La CI (`.github/workflows/android.yml`) lance alors les tests et construit l'APK signé.
+La CI (`.github/workflows/android.yml`) lance alors deux étapes. D'abord un **test sur émulateur** : elle installe l'APK release minifié, donne le rôle Téléphone, remplit un faux journal, parcourt les écrans et simule des appels GSM entrants (écran déverrouillé puis verrouillé), avec des captures en artefact. Au moindre crash, la release est bloquée. Ensuite, elle lance les tests unitaires et de rendu (captures des écrans clés en artefact) et construit l'APK signé.
 Si le tag `v0.2.0` n'existe pas encore, elle crée le tag et la GitHub Release `Allô 0.2.0` avec `Allo-v0.2.0.apk` et la section du changelog.
 Si le tag existe déjà, elle fait seulement un build de vérification.
 
@@ -114,3 +120,9 @@ L'appli vérifie `releases/latest` au lancement, au plus toutes les 6 h. Elle pr
 ```
 
 Le build demande le JDK 17+ et le SDK Android 37.
+
+## Limites connues
+
+- **Appels vidéo** : non pris en charge. Les opérateurs français proposent peu la visio sur le réseau mobile, et cela demanderait la gestion de la caméra et des surfaces vidéo de Telecom.
+- **Vibration par contact ou par groupe** : impossible, c'est le système (Telecom) qui fait vibrer et sonner, pas l'appli Téléphone. La sonnerie, elle, est bien personnalisable.
+- **Réglages MagicOS** « écran de verrouillage » et « pop-up en arrière-plan » : selon la version de MagicOS, ils n'existent pas toujours. Ils sont donc facultatifs.

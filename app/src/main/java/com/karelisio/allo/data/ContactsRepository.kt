@@ -277,6 +277,39 @@ class ContactsRepository(private val context: Context) {
         lookupKeyForRaw(rawId)
     }
 
+    data class ContactGroup(val id: Long, val title: String, val count: Int)
+
+    /** Groupes de contacts (libellés) visibles. */
+    fun groups(): List<ContactGroup> = runCatching {
+        val out = mutableListOf<ContactGroup>()
+        resolver.query(ContactsContract.Groups.CONTENT_SUMMARY_URI,
+            arrayOf(ContactsContract.Groups._ID, ContactsContract.Groups.TITLE, ContactsContract.Groups.SUMMARY_COUNT),
+            "${ContactsContract.Groups.DELETED} = 0", null, "${ContactsContract.Groups.TITLE} COLLATE LOCALIZED ASC")?.use { c ->
+            while (c.moveToNext()) {
+                val title = c.getString(1)?.takeIf { it.isNotBlank() } ?: continue
+                val count = c.getInt(2)
+                if (count > 0 && out.none { it.title == title }) out += ContactGroup(c.getLong(0), title, count)
+                else out.firstOrNull { it.title == title }?.let { e -> out[out.indexOf(e)] = e.copy(count = e.count + count) }
+            }
+        }
+        out
+    }.getOrDefault(emptyList())
+
+    /** Applique (ou retire, si null) une sonnerie à tous les membres d'un groupe. Renvoie le nombre de contacts modifiés. */
+    suspend fun setGroupRingtone(groupTitle: String, ringtone: String?): Int = withContext(Dispatchers.IO) {
+        if (!canWrite) return@withContext 0
+        val groupIds = mutableListOf<Long>()
+        resolver.query(ContactsContract.Groups.CONTENT_URI, arrayOf(ContactsContract.Groups._ID),
+            "${ContactsContract.Groups.TITLE} = ? AND ${ContactsContract.Groups.DELETED} = 0", arrayOf(groupTitle), null)?.use { c -> while (c.moveToNext()) groupIds += c.getLong(0) }
+        if (groupIds.isEmpty()) return@withContext 0
+        val contactIds = mutableSetOf<Long>()
+        resolver.query(ContactsContract.Data.CONTENT_URI, arrayOf(ContactsContract.Data.CONTACT_ID),
+            "${ContactsContract.Data.MIMETYPE} = ? AND ${CommonDataKinds.GroupMembership.GROUP_ROW_ID} IN (${groupIds.joinToString(",")})",
+            arrayOf(CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE), null)?.use { c -> while (c.moveToNext()) contactIds += c.getLong(0) }
+        val v = ContentValues().apply { put(ContactsContract.Contacts.CUSTOM_RINGTONE, ringtone) }
+        contactIds.count { id -> runCatching { resolver.update(ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, id), v, null, null) > 0 }.getOrDefault(false) }
+    }
+
     /** Comptes où l'on peut écrire des contacts (adaptateurs de synchro « uploading »). */
     fun writableAccounts(): List<ContactAccount> = runCatching {
         val writableTypes = android.content.ContentResolver.getSyncAdapterTypes()

@@ -35,6 +35,8 @@ data class AppSettings(
     val blockConfig: BlockConfig = BlockConfig(),
     val echoContacts: Set<String> = emptySet(),
     val manualChecks: Set<String> = emptySet(),
+    /** false = écran d'appel toujours sombre ; true = suit le thème du système. */
+    val callScreenSystemTheme: Boolean = false,
 )
 
 class SettingsStore(private val context: Context) {
@@ -55,6 +57,7 @@ class SettingsStore(private val context: Context) {
         val bBlack = stringPreferencesKey("block_black")
         val echo = stringSetPreferencesKey("echo_contacts")
         val manual = stringSetPreferencesKey("manual_checks")
+        val callTheme = booleanPreferencesKey("call_screen_system_theme")
         val onboarding = booleanPreferencesKey("onboarding_done")
         val lastUpdateCheck = longPreferencesKey("last_update_check")
         val skipVersion = stringPreferencesKey("skip_version")
@@ -87,6 +90,7 @@ class SettingsStore(private val context: Context) {
             ),
             echoContacts = p[K.echo] ?: emptySet(),
             manualChecks = p[K.manual] ?: emptySet(),
+            callScreenSystemTheme = p[K.callTheme] ?: d.callScreenSystemTheme,
         )
     }
 
@@ -111,6 +115,7 @@ class SettingsStore(private val context: Context) {
             p[K.bBlack] = s.blockConfig.blacklist.name
             p[K.echo] = s.echoContacts
             p[K.manual] = s.manualChecks
+            p[K.callTheme] = s.callScreenSystemTheme
         }
     }
 

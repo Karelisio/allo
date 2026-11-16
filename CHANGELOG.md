@@ -2,6 +2,15 @@
 
 Toutes les versions d'Allô. La section correspondant au contenu de `VERSION` sert de notes de release.
 
+## [0.6.0] - 2026-11-16
+
+Confort.
+
+- Statistiques locales : appels, temps au téléphone, entrants / sortants / manqués, appels par jour de la semaine, personnes avec qui tu passes le plus de temps (ce mois, 30 jours, année, tout).
+- Sonnerie par groupe de contacts (famille, travail…).
+- Écran d'appel : sombre (par défaut) ou aux couleurs du système.
+- README : nouveautés et limites connues (appels vidéo, vibration par contact).
+
 ## [0.5.0] - 2026-11-16
 
 Qualité.
