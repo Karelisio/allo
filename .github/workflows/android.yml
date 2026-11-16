@@ -145,7 +145,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           V="${{ steps.v.outputs.version }}"
-          gh release create "v$V" "Allo-v$V.apk" \
-            --title "Allô $V" \
-            --notes-file notes.md \
-            --target "$GITHUB_SHA"
+          # Jusqu'à 4 tentatives : l'API GitHub refuse parfois ponctuellement (HTTP 403/5xx).
+          for i in 1 2 3 4; do
+            if gh release view "v$V" > /dev/null 2>&1; then echo "Release v$V déjà présente."; exit 0; fi
+            if gh release create "v$V" "Allo-v$V.apk" --title "Allô $V" --notes-file notes.md --target "$GITHUB_SHA" --latest; then exit 0; fi
+            echo "Tentative $i échouée, nouvel essai dans $((i * 20)) s…"; sleep $((i * 20))
+          done
+          exit 1
