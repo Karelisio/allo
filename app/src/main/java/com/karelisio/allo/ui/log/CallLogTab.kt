@@ -1,5 +1,6 @@
 package com.karelisio.allo.ui.log
 
+import com.karelisio.allo.ui.components.pressBounce
 import android.content.Intent
 import android.net.Uri
 import android.provider.ContactsContract
@@ -263,11 +264,14 @@ fun CallRow(g: CallGroup, nav: NavHostController, selection: RowSelection? = nul
             }
         },
     ) {
+        val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
         Box {
             Row(
-                Modifier.fillMaxWidth()
+                Modifier.fillMaxWidth().then(Modifier.pressBounce(interaction, 0.98f))
                     .background(if (selection?.selected == true) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface)
                     .combinedClickable(
+                        interactionSource = interaction,
+                        indication = androidx.compose.material3.ripple(),
                         onClick = {
                             if (selection?.active == true) { haptics.tick(); selection.onToggle() }
                             else nav.navigate(if (e.lookupUri != null) Routes.contact(e.lookupUri, sk) else Routes.number(e.number, sk))

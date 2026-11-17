@@ -1,5 +1,6 @@
 package com.karelisio.allo.ui.contacts
 
+import com.karelisio.allo.ui.components.sharedName
 import android.app.Activity
 import android.content.Intent
 import android.media.RingtoneManager
@@ -131,7 +132,10 @@ fun ContactDetailScreen(vm: MainViewModel, nav: NavHostController, lookupKey: St
             actions = {
                 if (d != null) {
                     IconToggleButton(checked = d.starred, onCheckedChange = { haptics.confirm(); scope.launch { Graph.contacts.setStarred(d.id, it) } }) {
-                        Icon(if (d.starred) Icons.Rounded.Star else Icons.Rounded.StarBorder, "Favori", tint = if (d.starred) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+                        val pop = remember { androidx.compose.animation.core.Animatable(1f) }
+                        LaunchedEffect(d.starred) { if (d.starred) { pop.snapTo(1.5f); pop.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = 0.35f, stiffness = 500f)) } }
+                        Icon(if (d.starred) Icons.Rounded.Star else Icons.Rounded.StarBorder, "Favori", tint = if (d.starred) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.graphicsLayer { scaleX = pop.value; scaleY = pop.value; rotationZ = (pop.value - 1f) * 60f })
                     }
                     IconButton(onClick = { nav.navigate(Routes.edit(lookupKey)) }) { Icon(Icons.Rounded.Edit, "Modifier") }
                     IconButton(onClick = { menu = true }) { Icon(Icons.Rounded.MoreVert, "Plus") }
@@ -148,7 +152,7 @@ fun ContactDetailScreen(vm: MainViewModel, nav: NavHostController, lookupKey: St
                     horizontalAlignment = Alignment.CenterHorizontally) {
                     Avatar(d?.name, d?.photoUri, size = if (d?.photoUri != null) 200.dp else 152.dp, key = d?.name ?: lookupKey, modifier = Modifier.sharedAvatar(sk))
                     Spacer(Modifier.height(16.dp))
-                    Text(d?.name.orEmpty(), style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
+                    Text(d?.name.orEmpty(), style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center, modifier = Modifier.sharedName(sk))
                     if (blocked) Text("Contact bloqué", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
                     Spacer(Modifier.height(20.dp))
                 }

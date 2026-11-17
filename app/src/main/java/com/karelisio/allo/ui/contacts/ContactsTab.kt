@@ -73,6 +73,8 @@ import com.karelisio.allo.ui.components.Cascade
 import com.karelisio.allo.ui.components.LocalCaller
 import com.karelisio.allo.ui.components.rememberHaptics
 import com.karelisio.allo.ui.components.sharedAvatar
+import com.karelisio.allo.ui.components.sharedName
+import com.karelisio.allo.ui.components.pressBounce
 import com.karelisio.allo.ui.log.EmptyState
 import com.karelisio.allo.widget.Shortcuts
 import kotlinx.coroutines.launch
@@ -128,8 +130,10 @@ fun FavoritesTab(vm: MainViewModel, nav: NavHostController) {
 
 @Composable
 private fun FavoriteTile(c: Contact, sk: String, small: Boolean = false, onClick: () -> Unit, onLong: () -> Unit) {
+    val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
     Column(
-        Modifier.padding(6.dp).clip(RoundedCornerShape(24.dp)).combinedClickable(onClick = onClick, onLongClick = onLong).padding(8.dp),
+        Modifier.padding(6.dp).pressBounce(interaction, 0.92f).clip(RoundedCornerShape(24.dp))
+            .combinedClickable(interactionSource = interaction, indication = androidx.compose.material3.ripple(), onClick = onClick, onLongClick = onLong).padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Avatar(c.name, c.photoUri, size = if (small) 60.dp else 76.dp, key = c.name, modifier = Modifier.sharedAvatar(sk))
@@ -186,14 +190,16 @@ fun ContactsTab(vm: MainViewModel, nav: NavHostController) {
                 }
                 list.forEach { c ->
                     item(key = "c${c.id}") {
+                        val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
                         Row(
-                            Modifier.fillMaxWidth().animateItem().clickable { nav.navigate(Routes.contact(c.lookupKey, "list-${c.lookupKey}")) }
+                            Modifier.fillMaxWidth().animateItem().pressBounce(interaction)
+                                .clickable(interaction, androidx.compose.material3.ripple()) { nav.navigate(Routes.contact(c.lookupKey, "list-${c.lookupKey}")) }
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Avatar(c.name, c.thumbUri ?: c.photoUri, size = 44.dp, key = c.name, modifier = Modifier.sharedAvatar("list-${c.lookupKey}"))
                             Spacer(Modifier.width(16.dp))
-                            Text(c.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(c.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.sharedName("list-${c.lookupKey}"))
                         }
                     }
                 }

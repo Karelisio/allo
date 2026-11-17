@@ -25,6 +25,11 @@ Police : Roboto Flex (SIL Open Font License, voir `FONT_LICENSE_OFL.txt`).
 - **Messagerie vocale visuelle** : écoute, transcription et suppression des messages fournis au système par l'opérateur ; sinon, appel de la messagerie.
 - **Journal** : sélection multiple pour supprimer plusieurs appels, recherches récentes.
 - **Statistiques locales** : nombre d'appels, temps au téléphone, répartition par jour de la semaine, personnes avec qui tu passes le plus de temps. Tout est calculé sur le téléphone.
+- **Numéros inconnus décrits hors ligne** : mobile, fixe et région, box internet, numéro gratuit ou surtaxé, démarchage, pays pour l'international. Rien n'est envoyé.
+- **Signaler un démarchage** depuis le journal ou le détail d'un numéro. Un numéro bloqué peut être enregistré en contact avec une note.
+- **Tuile de réglages rapides** « Inconnus en silence » et **widget des appels récents**.
+- **Fiabilité** : tests de la sonnerie, de l'appel avec téléphone verrouillé et des règles de blocage, état des notifications d'appel, et **journal de diagnostic** local (numéros masqués) à copier.
+- **Audio Android 14+** via l'API CallEndpoint (nom du casque ou de la voiture, bascule fiable), avec l'ancienne API en repli pour Android 10 à 13.
 - **Sonnerie par groupe de contacts** (famille, travail…), et écran d'appel sombre ou aux couleurs du système.
 - **Widget Glance** de favoris (2x2 à 4x4, couleurs dynamiques) et **raccourcis d'appli** vers les 4 premiers favoris.
 - **Intégrations** :

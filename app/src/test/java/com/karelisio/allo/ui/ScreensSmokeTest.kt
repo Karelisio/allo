@@ -59,6 +59,7 @@ class ScreensSmokeTest {
     @Test fun dialer() = render("Créer un contact") { DialerScreen(vm, it, "0612") }
     @Test fun stats() = render("Statistiques") { com.karelisio.allo.ui.settings.StatsScreen(vm, it) }
     @Test fun groups() = render("Sonnerie par groupe") { com.karelisio.allo.ui.settings.GroupRingtoneScreen(it) }
+    @Test fun diagnostics() = render("Diagnostic") { com.karelisio.allo.ui.settings.DiagnosticsScreen(it) }
     @Test fun onboarding() = render("Bienvenue dans Allô") { OnboardingScreen(onFinished = {}, onPermissionsChanged = {}) }
     @Test fun onboardingDark() = render("Bienvenue dans Allô", dark = true) { OnboardingScreen(onFinished = {}, onPermissionsChanged = {}) }
 }

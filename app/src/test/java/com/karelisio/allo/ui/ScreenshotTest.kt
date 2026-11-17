@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material3.MaterialTheme
@@ -58,6 +59,16 @@ class ScreenshotTest {
     }
     @Test fun dialPadLight() = shot("clavier") {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).padding(16.dp), contentAlignment = Alignment.BottomCenter) { DialPad({}) }
+    }
+    @Test fun themedIcon() = shot("icone-a-theme") {
+        Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color(0xFF1E2A22)), contentAlignment = Alignment.Center) {
+            androidx.compose.foundation.layout.Row {
+                androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(com.karelisio.allo.R.drawable.ic_launcher_monochrome), null,
+                    Modifier.padding(8.dp).size(160.dp), tint = androidx.compose.ui.graphics.Color(0xFFB8F0C8))
+                androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(com.karelisio.allo.R.drawable.ic_launcher_foreground), null,
+                    Modifier.padding(8.dp).size(160.dp).background(androidx.compose.ui.graphics.Color(0xFF1E6B3C), androidx.compose.foundation.shape.CircleShape))
+            }
+        }
     }
     @Test fun emptyLog() = shot("journal-vide") {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface), contentAlignment = Alignment.Center) {

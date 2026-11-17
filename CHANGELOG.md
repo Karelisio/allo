@@ -2,6 +2,25 @@
 
 Toutes les versions d'Allô. La section correspondant au contenu de `VERSION` sert de notes de release.
 
+## [0.7.0] - 2026-11-17
+
+Fiabilité :
+- Audio Android 14+ : nouvelle API CallEndpoint (sortie audio, nom du casque ou de la voiture), ancienne API conservée pour Android 10 à 13.
+- Journal de diagnostic local : les derniers événements d'appel (sonnerie, décroché, fin et raison, filtrage, sortie audio), numéros masqués, à copier depuis Fiabilité.
+- Fiabilité : tests de la sonnerie, de l'appel avec téléphone verrouillé (appel de test 5 s plus tard) et des règles de blocage, plus l'état des notifications d'appel entrant.
+
+Fonctions :
+- Numéros inconnus décrits hors ligne : mobile, fixe et région, box, gratuit, surtaxé, démarchage, pays.
+- « Signaler comme démarchage » depuis le journal et le détail d'un numéro.
+- Enregistrer en contact un numéro bloqué, avec la note « Démarcheur ».
+- Tuile de réglages rapides « Inconnus en silence ».
+- Widget des appels récents (manqués en évidence), un toucher pour rappeler.
+
+Finition :
+- Les onglets glissent dans le sens de la navigation ; le nom du contact passe en douceur de la liste à la fiche.
+- Rebond au toucher sur le journal, les contacts et les favoris ; étoile des favoris animée.
+- Icône à thème redessinée : bulle pleine, combiné et ondes en creux.
+
 ## [0.6.1] - 2026-11-17
 
 - Messagerie vocale : le numéro renseigné dans Réglages → Appels (ex. 660) est désormais prioritaire sur celui fourni par la SIM, qui pouvait être le numéro « depuis l'étranger ». Champ vide = numéro de la SIM.

@@ -151,7 +151,11 @@ fun HomeScreen(vm: MainViewModel, nav: NavHostController, isDefaultDialer: Boole
         },
     ) { pad ->
         Box(Modifier.fillMaxSize().padding(pad)) {
-            AnimatedContent(tab, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "tab") { t ->
+            AnimatedContent(tab, transitionSpec = {
+                val dir = if (targetState.ordinal > initialState.ordinal) 1 else -1
+                (androidx.compose.animation.slideInHorizontally(androidx.compose.animation.core.spring(dampingRatio = 0.85f, stiffness = 420f)) { w -> dir * w / 5 } + fadeIn()) togetherWith
+                    (androidx.compose.animation.slideOutHorizontally(androidx.compose.animation.core.spring(dampingRatio = 0.85f, stiffness = 420f)) { w -> -dir * w / 5 } + fadeOut())
+            }, label = "tab") { t ->
                 when (t) {
                     HomeTab.FAVORITES -> FavoritesTab(vm, nav)
                     HomeTab.LOG -> CallLogTab(vm, nav)
