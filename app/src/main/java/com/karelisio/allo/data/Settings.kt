@@ -23,7 +23,8 @@ private val Context.store by preferencesDataStore("allo_settings")
 data class AppSettings(
     val keyVibration: Boolean = true,
     val dtmfTones: Boolean = false,
-    val voicemailFallback: String = "888",
+    /** Numéro de messagerie vocale ; vide = celui fourni par la SIM. */
+    val voicemailNumber: String = "",
     /** Identifiant du PhoneAccount par défaut, « » = demander à chaque appel. */
     val defaultAccountId: String = "",
     val callbackDelayMin: Int = 10,
@@ -74,7 +75,7 @@ class SettingsStore(private val context: Context) {
         return AppSettings(
             keyVibration = p[K.vib] ?: d.keyVibration,
             dtmfTones = p[K.dtmf] ?: d.dtmfTones,
-            voicemailFallback = p[K.vm] ?: d.voicemailFallback,
+            voicemailNumber = (p[K.vm] ?: d.voicemailNumber).let { if (it == "888") "" else it },
             defaultAccountId = p[K.acc] ?: d.defaultAccountId,
             callbackDelayMin = p[K.delay] ?: d.callbackDelayMin,
             headsUpWhenUnlocked = p[K.headsUp] ?: d.headsUpWhenUnlocked,
@@ -101,7 +102,7 @@ class SettingsStore(private val context: Context) {
             val s = transform(fromPrefs(p))
             p[K.vib] = s.keyVibration
             p[K.dtmf] = s.dtmfTones
-            p[K.vm] = s.voicemailFallback
+            p[K.vm] = s.voicemailNumber
             p[K.acc] = s.defaultAccountId
             p[K.delay] = s.callbackDelayMin
             p[K.headsUp] = s.headsUpWhenUnlocked

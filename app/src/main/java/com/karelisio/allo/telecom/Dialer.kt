@@ -85,20 +85,21 @@ object Dialer {
         }
     }
 
+    /**
+     * Messagerie vocale : le numéro renseigné dans les réglages est prioritaire
+     * (la SIM fournit parfois le numéro « depuis l'étranger »). Sinon, numéro fourni par la SIM.
+     */
     fun voicemail(context: Context, handle: PhoneAccountHandle?) {
-        val vm = Graph.sims.voicemailNumber(handle)
-        if (vm != null) {
+        Graph.scope.launch(Dispatchers.Main) {
+            val custom = Graph.settings.current().voicemailNumber.trim()
+            if (custom.isNotEmpty()) { place(context, custom, handle); return@launch }
+            val vm = Graph.sims.voicemailNumber(handle)
+            if (vm == null) { context.toast("Aucun numéro de messagerie : renseigne-le dans Réglages → Appels"); return@launch }
             val telecom = context.getSystemService(TelecomManager::class.java)
             val extras = Bundle().apply { if (handle != null) putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, handle) }
             @SuppressLint("MissingPermission")
             val ok = runCatching { telecom.placeCall(Uri.fromParts("voicemail", "", null), extras); true }.getOrDefault(false)
-            if (ok) return
-            place(context, vm, handle)
-        } else {
-            Graph.scope.launch(Dispatchers.Main) {
-                val fb = Graph.settings.current().voicemailFallback
-                if (fb.isNotBlank()) place(context, fb, handle) else context.toast("Aucun numéro de messagerie")
-            }
+            if (!ok) place(context, vm, handle)
         }
     }
 }

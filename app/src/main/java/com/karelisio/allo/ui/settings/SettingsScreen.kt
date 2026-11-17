@@ -78,7 +78,7 @@ fun SettingsScreen(vm: MainViewModel, nav: NavHostController) {
         }
         item { SwitchRow("Vibration des touches", s.keyVibration, { v -> upd { it.copy(keyVibration = v) } }, icon = Icons.Rounded.Vibration) }
         item { SwitchRow("Sons du clavier (DTMF)", s.dtmfTones, { v -> upd { it.copy(dtmfTones = v) } }, icon = Icons.AutoMirrored.Rounded.VolumeUp) }
-        item { NavRow("Messagerie vocale de secours", "Utilisé si l'opérateur ne fournit pas de numéro : ${s.voicemailFallback}", Icons.Rounded.Voicemail) { vmDialog = true } }
+        item { NavRow("Numéro de messagerie vocale", if (s.voicemailNumber.isBlank()) "Numéro fourni par la SIM" else "${s.voicemailNumber} (appui long sur 1)", Icons.Rounded.Voicemail) { vmDialog = true } }
 
         section("Appel entrant")
         item { SwitchRow("Notification quand l'écran est déverrouillé", s.headsUpWhenUnlocked, { v -> upd { it.copy(headsUpWhenUnlocked = v) } },
@@ -126,12 +126,18 @@ fun SettingsScreen(vm: MainViewModel, nav: NavHostController) {
     }
 
     if (vmDialog) {
-        var v by remember { mutableStateOf(s.voicemailFallback) }
+        var v by remember { mutableStateOf(s.voicemailNumber) }
         AlertDialog(
             onDismissRequest = { vmDialog = false },
             title = { Text("Messagerie vocale") },
-            text = { OutlinedTextField(v, { v = it }, singleLine = true, label = { Text("Numéro") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)) },
-            confirmButton = { TextButton(onClick = { vmDialog = false; upd { it.copy(voicemailFallback = v.trim()) } }) { Text("OK") } },
+            text = {
+                androidx.compose.foundation.layout.Column {
+                    Text("Appelé par l'appui long sur 1. Laisse vide pour utiliser le numéro fourni par ta SIM.")
+                    androidx.compose.foundation.layout.Spacer(Modifier.padding(4.dp))
+                    OutlinedTextField(v, { v = it }, singleLine = true, label = { Text("Numéro (ex. 660, 888, 123)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone))
+                }
+            },
+            confirmButton = { TextButton(onClick = { vmDialog = false; upd { it.copy(voicemailNumber = v.trim()) } }) { Text("OK") } },
             dismissButton = { TextButton(onClick = { vmDialog = false }) { Text("Annuler") } },
         )
     }

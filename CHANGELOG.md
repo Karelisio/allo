@@ -2,6 +2,10 @@
 
 Toutes les versions d'Allô. La section correspondant au contenu de `VERSION` sert de notes de release.
 
+## [0.6.1] - 2026-11-17
+
+- Messagerie vocale : le numéro renseigné dans Réglages → Appels (ex. 660) est désormais prioritaire sur celui fourni par la SIM, qui pouvait être le numéro « depuis l'étranger ». Champ vide = numéro de la SIM.
+
 ## [0.6.0] - 2026-11-16
 
 Confort.
