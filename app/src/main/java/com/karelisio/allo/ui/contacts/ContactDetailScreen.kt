@@ -39,6 +39,9 @@ import androidx.compose.material.icons.rounded.SimCard
 import androidx.compose.material.icons.rounded.Sms
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarBorder
+import androidx.compose.material.icons.rounded.Wallpaper
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -120,6 +123,15 @@ fun ContactDetailScreen(vm: MainViewModel, nav: NavHostController, lookupKey: St
             val uri: Uri? = if (Build.VERSION.SDK_INT >= 33) res.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
             else res.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
             scope.launch { Graph.contacts.setRingtone(d.id, uri?.toString()) }
+        }
+    }
+    var wallpaper by remember(lookupKey) { mutableStateOf(com.karelisio.allo.util.CallWallpapers.uriFor(ctx, lookupKey)) }
+    val wallpaperPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) scope.launch {
+            if (com.karelisio.allo.util.CallWallpapers.set(ctx, lookupKey, uri)) {
+                wallpaper = com.karelisio.allo.util.CallWallpapers.uriFor(ctx, lookupKey)
+                ctx.toast("Fond d'écran d'appel enregistré")
+            } else ctx.toast("Image illisible")
         }
     }
     val listState = rememberLazyListState()
@@ -215,6 +227,22 @@ fun ContactDetailScreen(vm: MainViewModel, nav: NavHostController, lookupKey: St
                                 putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
                                 putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, d.ringtone?.let(Uri::parse))
                             })
+                        }),
+                    )
+                    AlloListItem(
+                        headlineContent = { Text("Fond d'écran d'appel") },
+                        supportingContent = { Text(if (wallpaper != null) "Image personnalisée" else "Photo du contact ou couleurs du thème") },
+                        leadingContent = {
+                            val w = wallpaper
+                            if (w != null) coil3.compose.AsyncImage(w, null, contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                modifier = Modifier.size(width = 28.dp, height = 44.dp).clip(RoundedCornerShape(8.dp)))
+                            else Icon(Icons.Rounded.Wallpaper, null)
+                        },
+                        trailingContent = {
+                            if (wallpaper != null) TextButton(onClick = { com.karelisio.allo.util.CallWallpapers.remove(ctx, lookupKey); wallpaper = null }) { Text("Retirer") }
+                        },
+                        modifier = Modifier.combinedClickable(onClick = {
+                            wallpaperPicker.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                         }),
                     )
                     if (sims.size > 1) {

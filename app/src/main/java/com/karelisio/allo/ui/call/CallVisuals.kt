@@ -113,13 +113,18 @@ fun CallWaves(color: Color, intensity: () -> Float, modifier: Modifier = Modifie
 
 /** Fond de l'écran d'appel : photo floutée si disponible, sinon dégradé de couleurs dynamiques. */
 @Composable
-fun CallBackground(photoUri: String?, modifier: Modifier = Modifier) {
+fun CallBackground(photoUri: String?, modifier: Modifier = Modifier, wallpaperUri: String? = null) {
     val s = MaterialTheme.colorScheme
     val reduce = LocalReduceMotion.current
     val t = rememberInfiniteTransition(label = "bg")
     val shift by t.animateFloat(0f, 1f, infiniteRepeatable(tween(9000, easing = LinearEasing), RepeatMode.Reverse), label = "shift")
     Box(modifier.fillMaxSize().background(s.surfaceContainerLowest)) {
-        if (photoUri != null && Build.VERSION.SDK_INT >= 31) {
+        if (wallpaperUri != null) {
+            AsyncImage(wallpaperUri, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
+                0f to Color.Black.copy(0.55f), 0.35f to Color.Black.copy(0.15f), 0.6f to Color.Black.copy(0.25f), 1f to Color.Black.copy(0.75f),
+            )))
+        } else if (photoUri != null && Build.VERSION.SDK_INT >= 31) {
             AsyncImage(photoUri, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().blur(70.dp))
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(0.35f), Color.Black.copy(0.65f)))))
         } else {

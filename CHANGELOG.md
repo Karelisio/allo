@@ -2,6 +2,12 @@
 
 Toutes les versions d'Allô. La section correspondant au contenu de `VERSION` sert de notes de release.
 
+## [0.7.1] - 2026-11-17
+
+- Fond d'écran d'appel par personne : sur la fiche d'un contact, « Fond d'écran d'appel » → choisis une image, affichée en plein écran pendant ses appels.
+- Bluetooth / voiture : quand tu choisis l'écouteur ou le haut-parleur, Allô garde ce choix pendant tout l'appel et le réimpose si la voiture reprend l'audio toute seule.
+- Diagnostic « pas de son » : au décroché (et 3 s après), le journal note la sortie réelle, le micro, le mode audio, le volume d'appel et l'appareil utilisé.
+
 ## [0.7.0] - 2026-11-17
 
 Fiabilité :

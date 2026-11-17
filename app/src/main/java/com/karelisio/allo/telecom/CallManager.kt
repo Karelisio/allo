@@ -38,6 +38,8 @@ data class CallInfo(
     val isIncoming: Boolean,
     val label: String?,
     val silenced: Boolean,
+    /** Fond d'écran d'appel choisi pour ce contact (fichier local), sinon null. */
+    val wallpaperUri: String? = null,
 ) {
     val displayName: String get() = name ?: if (PhoneNumbers.isHidden(number)) "Numéro masqué" else PhoneNumbers.format(number)
     val isLive: Boolean get() = phase != CallPhase.DISCONNECTED && phase != CallPhase.DISCONNECTING
@@ -87,7 +89,11 @@ object CallManager {
         if (calls.contains(call)) return
         calls += call
         val cb = object : Call.Callback() {
-            override fun onStateChanged(call: Call, state: Int) { com.karelisio.allo.util.CallDiagnostics.log("État : ${phaseOf(call)} (${com.karelisio.allo.util.CallDiagnostics.mask(numberOf(call))})"); publish() }
+            override fun onStateChanged(call: Call, state: Int) {
+                com.karelisio.allo.util.CallDiagnostics.log("État : ${phaseOf(call)} (${com.karelisio.allo.util.CallDiagnostics.mask(numberOf(call))})")
+                if (phaseOf(call) == CallPhase.ACTIVE) { logAudioSnapshot(); Graph.scope.launch { kotlinx.coroutines.delay(3_000); logAudioSnapshot() } }
+                publish()
+            }
             override fun onDetailsChanged(call: Call, details: Call.Details) = publish()
             override fun onChildrenChanged(call: Call, children: MutableList<Call>) = publish()
             override fun onConferenceableCallsChanged(call: Call, conferenceableCalls: MutableList<Call>) = publish()
@@ -105,6 +111,7 @@ object CallManager {
         callbacks.remove(call)?.let { call.unregisterCallback(it) }
         info(call)?.let { lastEnded.value = it.copy(phase = CallPhase.DISCONNECTED) }
         calls -= call
+        if (calls.isEmpty()) { userChoice = null; reapplied = 0 }
         publish()
     }
 
@@ -166,6 +173,7 @@ object CallManager {
             isIncoming = isIncoming,
             label = screening?.label?.takeIf { lk == null },
             silenced = screening?.action == com.karelisio.allo.core.BlockAction.SILENCE,
+            wallpaperUri = lk?.lookupKey?.let { com.karelisio.allo.util.CallWallpapers.uriFor(Graph.app, it) },
         )
     }
 
@@ -238,10 +246,44 @@ object CallManager {
         } else selectOutput(AudioOutput(AudioRoute.SPEAKER, "Haut-parleur"))
     }
 
-    @Suppress("DEPRECATION") // setAudioRoute / requestBluetoothAudio : voir AlloInCallService
+    /** Dernière sortie choisie par l'utilisateur pendant l'appel (respectée jusqu'à la fin de l'appel). */
+    private var userChoice: AudioOutput? = null
+    private var reapplied = 0
+
+    /**
+     * Une voiture ou un casque Bluetooth reprend parfois l'audio tout seul (connexion audio initiée
+     * par l'appareil). Si l'utilisateur a choisi l'écouteur ou le haut-parleur, on réimpose son choix
+     * (3 fois au plus par appel, pour ne jamais se battre indéfiniment avec l'appareil).
+     */
+    private fun shouldReapply(wanted: AudioRoute, now: AudioRoute): Boolean {
+        val bt = now == AudioRoute.BLUETOOTH || now == AudioRoute.CAR
+        val wantedLocal = wanted == AudioRoute.EARPIECE || wanted == AudioRoute.SPEAKER || wanted == AudioRoute.WIRED
+        return bt && wantedLocal && reapplied < 3
+    }
+
+    /** Photo de l'état audio réel (diagnostic « pas de son »). */
+    @Suppress("MissingPermission")
+    private fun logAudioSnapshot() {
+        runCatching {
+            val am = Graph.app.getSystemService(android.media.AudioManager::class.java)
+            val mode = when (am.mode) { android.media.AudioManager.MODE_IN_CALL -> "en appel"; android.media.AudioManager.MODE_IN_COMMUNICATION -> "communication"; android.media.AudioManager.MODE_NORMAL -> "normal"; else -> am.mode.toString() }
+            val vol = am.getStreamVolume(android.media.AudioManager.STREAM_VOICE_CALL)
+            val max = am.getStreamMaxVolume(android.media.AudioManager.STREAM_VOICE_CALL)
+            val dev = if (Build.VERSION.SDK_INT >= 31) am.communicationDevice?.let { "${it.productName} (type ${it.type})" } ?: "aucun" else "?"
+            val a = _audio.value
+            com.karelisio.allo.util.CallDiagnostics.log("Audio : sortie ${a.current.name}, micro ${if (a.muted) "coupé" else "ouvert"}, mode $mode, volume appel $vol/$max, appareil $dev")
+        }
+    }
+
     fun selectOutput(o: AudioOutput) {
-        val s = service ?: return
         com.karelisio.allo.util.CallDiagnostics.log("Sortie audio demandée : ${o.name}")
+        userChoice = o; reapplied = 0
+        selectOutputInternal(o)
+    }
+
+    @Suppress("DEPRECATION") // setAudioRoute / requestBluetoothAudio : voir AlloInCallService
+    private fun selectOutputInternal(o: AudioOutput) {
+        val s = service ?: return
         if (Build.VERSION.SDK_INT >= 34 && o.endpointId != null && requestEndpoint(s, o.endpointId)) return
         when (o.route) {
             AudioRoute.SPEAKER -> s.setAudioRoute(CallAudioState.ROUTE_SPEAKER)
@@ -257,6 +299,20 @@ object CallManager {
     @Suppress("MissingPermission")
     fun onAudioState(state: CallAudioState?) {
         rawAudio = state ?: return
+        if (Build.VERSION.SDK_INT < 34) {
+            val wanted = userChoice
+            val nowRoute = when (state.route) {
+                CallAudioState.ROUTE_BLUETOOTH -> AudioRoute.BLUETOOTH
+                CallAudioState.ROUTE_SPEAKER -> AudioRoute.SPEAKER
+                CallAudioState.ROUTE_WIRED_HEADSET -> AudioRoute.WIRED
+                else -> AudioRoute.EARPIECE
+            }
+            if (wanted != null && shouldReapply(wanted.route, nowRoute)) {
+                reapplied++
+                com.karelisio.allo.util.CallDiagnostics.log("Bluetooth a repris l'audio sans demande : retour à ${wanted.name}")
+                Graph.scope.launch(Dispatchers.Main) { kotlinx.coroutines.delay(400); selectOutputInternal(wanted) }
+            }
+        }
         // Android 14+ : les sorties viennent de CallEndpoint ; on ne garde ici que l'état du micro.
         if (Build.VERSION.SDK_INT >= 34 && endpoints.isNotEmpty()) { _audio.value = _audio.value.copy(muted = state.isMuted); service?.onCallsChanged(_calls.value); return }
         val ctx = Graph.app
@@ -302,6 +358,16 @@ object CallManager {
         currentEndpoint = e
         com.karelisio.allo.util.CallDiagnostics.log("Sortie audio : ${e.endpointName}")
         publishEndpoints()
+        val now = toOutput(e)
+        val wanted = userChoice
+        if (wanted != null && shouldReapply(wanted.route, now.route)) {
+            reapplied++
+            com.karelisio.allo.util.CallDiagnostics.log("${now.name} a repris l'audio sans demande : retour à ${wanted.name}")
+            val s = service ?: return
+            @Suppress("UNCHECKED_CAST")
+            val target = (endpoints as List<android.telecom.CallEndpoint>).map { toOutput(it) }.firstOrNull { it.route == wanted.route }
+            target?.endpointId?.let { id -> Graph.scope.launch(Dispatchers.Main) { kotlinx.coroutines.delay(400); requestEndpoint(s, id) } }
+        }
     }
 
     fun onMuted(muted: Boolean) { _audio.value = _audio.value.copy(muted = muted); service?.onCallsChanged(_calls.value) }

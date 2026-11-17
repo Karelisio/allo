@@ -160,12 +160,12 @@ fun CallScreen(
         if (reduce) tween(0) else spring(dampingRatio = 0.78f, stiffness = Spring.StiffnessLow), label = "answer",
     )
     val swipe = remember { mutableFloatStateOf(0f) }
-    val hasPhoto = main.photoUri != null
+    val hasPhoto = main.photoUri != null || main.wallpaperUri != null
     val onBg = if (hasPhoto) Color.White else MaterialTheme.colorScheme.onSurface
     val onBgVariant = if (hasPhoto) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
 
     Box(modifier.fillMaxSize().testTag("call_screen")) {
-        CallBackground(main.photoUri)
+        CallBackground(main.photoUri, wallpaperUri = main.wallpaperUri)
         Column(
             Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
