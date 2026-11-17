@@ -69,6 +69,7 @@ class InCallActivity : ComponentActivity() {
         else @Suppress("DEPRECATION") window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         handle(intent)
+        if (preview) androidx.core.app.NotificationManagerCompat.from(this).cancel(com.karelisio.allo.notifications.Notifications.PREVIEW_ID)
         val isPreview = preview
         setContent {
             val settings by Graph.settings.settings.collectAsState(initial = null)

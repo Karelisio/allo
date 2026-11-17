@@ -35,6 +35,7 @@ class AlloInCallService : InCallService() {
 
     override fun onCallAdded(call: Call) {
         super.onCallAdded(call)
+        com.karelisio.allo.util.CallDiagnostics.log("Appel ${if (CallManager.phaseOf(call) == CallPhase.RINGING) "entrant" else "sortant"} (${com.karelisio.allo.util.CallDiagnostics.mask(call.details?.handle?.schemeSpecificPart)})")
         CallManager.add(call)
         val ringing = CallManager.phaseOf(call) == CallPhase.RINGING
         if (ringing) {
@@ -65,6 +66,7 @@ class AlloInCallService : InCallService() {
             val s = Graph.settings.current()
             val locked = getSystemService(KeyguardManager::class.java)?.isKeyguardLocked == true
             val useFullScreen = locked || !(s.headsUpWhenUnlocked || s.bulleHandlesIncoming)
+            com.karelisio.allo.util.CallDiagnostics.log(if (locked) "Écran verrouillé : plein écran" else if (useFullScreen) "Déverrouillé : plein écran" else "Déverrouillé : notification")
             if (useFullScreen && !locked) launchUi()
             if (s.flipToSilence) {
                 flip = FlipDetector(this@AlloInCallService) { silenceRinger() }.also { it.start() }
@@ -95,6 +97,21 @@ class AlloInCallService : InCallService() {
         CallManager.onAudioState(audioState)
     }
 
+    override fun onAvailableCallEndpointsChanged(availableEndpoints: MutableList<android.telecom.CallEndpoint>) {
+        super.onAvailableCallEndpointsChanged(availableEndpoints)
+        CallManager.onAvailableEndpoints(availableEndpoints)
+    }
+
+    override fun onCallEndpointChanged(callEndpoint: android.telecom.CallEndpoint) {
+        super.onCallEndpointChanged(callEndpoint)
+        CallManager.onCurrentEndpoint(callEndpoint)
+    }
+
+    override fun onMuteStateChanged(isMuted: Boolean) {
+        super.onMuteStateChanged(isMuted)
+        CallManager.onMuted(isMuted)
+    }
+
     fun launchUi() {
         startActivity(Intent(this, InCallActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP))
     }
@@ -120,7 +137,7 @@ class AlloInCallService : InCallService() {
             foreground = runCatching {
                 ServiceCompat.startForeground(this, Notifications.CALL_ID, notif, type); true
             }.getOrDefault(false)
-            if (!foreground) Notifications.notifyCall(this, notif)
+            if (!foreground) { com.karelisio.allo.util.CallDiagnostics.log("Service au premier plan refusé : notification simple"); Notifications.notifyCall(this, notif) }
         } else {
             Notifications.notifyCall(this, notif)
         }

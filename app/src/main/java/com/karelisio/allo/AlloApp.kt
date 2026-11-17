@@ -9,6 +9,7 @@ class AlloApp : Application() {
         super.onCreate()
         com.karelisio.allo.util.CrashLog.install(this)
         Graph.init(this)
+        com.karelisio.allo.util.CallDiagnostics.init(this)
         Notifications.createChannels(this)
         Graph.scope.launch { runCatching { Graph.block.seedDefaults() } }
     }

@@ -22,6 +22,7 @@ class AlloCallScreeningService : CallScreeningService() {
         Graph.scope.launch {
             val decision = withTimeoutOrNull(3_500) { runCatching { Graph.block.decide(number) }.getOrNull() } ?: BlockDecision.ALLOW
             ScreeningResults.put(number, decision)
+            com.karelisio.allo.util.CallDiagnostics.log("Filtrage (${com.karelisio.allo.util.CallDiagnostics.mask(number)}) : ${decision.action}${decision.category?.let { " · $it" } ?: ""}")
             val response = CallResponse.Builder()
             when (decision.action) {
                 BlockAction.BLOCK -> response.setDisallowCall(true).setRejectCall(true).setSkipNotification(true).setSkipCallLog(false)

@@ -68,6 +68,7 @@ import com.karelisio.allo.update.UpdateState
 import com.karelisio.allo.update.Updater
 import com.karelisio.allo.util.isHonorDevice
 import com.karelisio.allo.util.safeStart
+import com.karelisio.allo.util.copyToClipboard
 import kotlinx.coroutines.launch
 
 @Composable
@@ -188,7 +189,21 @@ fun ReliabilityScreen(vm: MainViewModel, nav: NavHostController) {
                 }
             }
         }
+        item { ReliabilityTests() }
         section("État")
+        item {
+            val nm = remember(version) { ctx.getSystemService(android.app.NotificationManager::class.java) }
+            val ok = remember(version) {
+                nm.areNotificationsEnabled() &&
+                    (nm.getNotificationChannel(com.karelisio.allo.notifications.Notifications.CH_INCOMING)?.importance ?: 0) >= android.app.NotificationManager.IMPORTANCE_HIGH
+            }
+            CheckRow("Notifications d'appel entrant", if (ok) "Activées, priorité haute" else "Désactivées ou priorité trop basse : l'appel peut ne pas s'afficher", ok) {
+                ctx.safeStart(Intent(android.provider.Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                    .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, ctx.packageName)
+                    .putExtra(android.provider.Settings.EXTRA_CHANNEL_ID, com.karelisio.allo.notifications.Notifications.CH_INCOMING))
+            }
+        }
+        item { NavRow("Journal de diagnostic", "Derniers événements d'appel, à copier pour signaler un souci", Icons.Rounded.PhoneInTalk) { nav.navigate(com.karelisio.allo.ui.Routes.DIAGNOSTICS) } }
         item { CheckRow("Appli Téléphone par défaut", if (isDefault) "Oui" else "Non : les appels ne passent pas par Allô", isDefault) {
             Dialer.roleRequestIntent(ctx)?.let { ctx.safeStart(it) }
         } }
@@ -282,4 +297,71 @@ fun AboutScreen(nav: NavHostController) {
         }
     }
     LaunchedEffect(Unit) {}
+}
+
+/** Tests concrets : sonnerie, appel avec téléphone verrouillé, règles de blocage. */
+@Composable
+private fun ReliabilityTests() {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var countdown by remember { mutableIntStateOf(0) }
+    var blockResults by remember { mutableStateOf<List<Pair<String, String>>?>(null) }
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+            FilledTonalButton(onClick = {
+                val r = runCatching { android.media.RingtoneManager.getRingtone(ctx, android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_RINGTONE)) }.getOrNull()
+                r?.play(); scope.launch { kotlinx.coroutines.delay(3000); r?.stop() }
+            }) { Text("Sonnerie") }
+            FilledTonalButton(enabled = countdown == 0, onClick = {
+                scope.launch {
+                    for (i in 5 downTo 1) { countdown = i; kotlinx.coroutines.delay(1000) }
+                    countdown = 0
+                    com.karelisio.allo.notifications.Notifications.notifyPreviewIncoming(ctx)
+                }
+            }) { Text(if (countdown > 0) "Verrouille… $countdown" else "Appel verrouillé") }
+            FilledTonalButton(onClick = {
+                scope.launch {
+                    val samples = listOf("0162123456" to "Démarchage", "0612345678" to "Mobile inconnu", "" to "Masqué", "+33145454545" to "Fixe inconnu")
+                    blockResults = samples.map { (n, label) ->
+                        val d = Graph.block.decide(n.ifEmpty { null })
+                        label to when (d.action) { BlockAction.BLOCK -> "bloqué"; BlockAction.SILENCE -> "silencieux"; BlockAction.ALLOW -> "sonne" }
+                    }
+                }
+            }) { Text("Blocage") }
+        }
+        if (countdown > 0) Text("Verrouille ton téléphone maintenant : l'écran d'appel de test va s'allumer.", style = MaterialTheme.typography.bodySmall)
+        blockResults?.let { res ->
+            Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                Column(Modifier.padding(16.dp)) {
+                    Text("Avec tes réglages actuels :", style = MaterialTheme.typography.labelLarge)
+                    res.forEach { (label, r) -> Text("• $label → $r", style = MaterialTheme.typography.bodyMedium) }
+                }
+            }
+        }
+    }
+}
+
+/** Journal de diagnostic local (événements d'appel). */
+@Composable
+fun DiagnosticsScreen(nav: NavHostController) {
+    val ctx = LocalContext.current
+    var lines by remember { mutableStateOf(com.karelisio.allo.util.CallDiagnostics.all()) }
+    SettingsScaffold("Diagnostic", nav) {
+        item {
+            Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                Button(onClick = {
+                    val header = "Allô ${BuildConfig.VERSION_NAME} · ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE}"
+                    ctx.copyToClipboard("Diagnostic Allô", header + "\n" + lines.joinToString("\n"))
+                }, enabled = lines.isNotEmpty()) { Text("Copier") }
+                TextButton(onClick = { com.karelisio.allo.util.CallDiagnostics.clear(); lines = emptyList() }) { Text("Effacer") }
+            }
+            Text("Numéros masqués (4 derniers chiffres). Rien n'est envoyé.", Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (lines.isEmpty()) item { Text("Aucun événement pour l'instant.", Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        items(lines.size) { i ->
+            Text(lines[i], Modifier.padding(horizontal = 24.dp, vertical = 3.dp),
+                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
+        }
+    }
 }

@@ -62,6 +62,7 @@ object Routes {
     const val ABOUT = "settings/about"
     const val VOICEMAIL = "voicemail"
     const val STATS = "stats"
+    const val DIAGNOSTICS = "settings/diagnostics"
     const val RINGTONE_GROUPS = "settings/groups"
 }
 
@@ -130,6 +131,7 @@ fun AlloRoot(
                     screen(Routes.ECHO) { EchoSettingsScreen(vm, nav) }
                     screen(Routes.ABOUT) { AboutScreen(nav) }
                     screen(Routes.VOICEMAIL) { com.karelisio.allo.ui.log.VoicemailScreen(vm, nav) }
+                    screen(Routes.DIAGNOSTICS) { com.karelisio.allo.ui.settings.DiagnosticsScreen(nav) }
                     screen(Routes.STATS) { com.karelisio.allo.ui.settings.StatsScreen(vm, nav) }
                     screen(Routes.RINGTONE_GROUPS) { com.karelisio.allo.ui.settings.GroupRingtoneScreen(nav) }
                 }

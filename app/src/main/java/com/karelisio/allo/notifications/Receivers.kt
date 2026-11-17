@@ -22,6 +22,7 @@ class CallActionReceiver : BroadcastReceiver() {
             ACTION_HANGUP -> CallManager.hangup()
             ACTION_SPEAKER -> CallManager.toggleSpeaker()
             ACTION_MUTE -> CallManager.toggleMute()
+            ACTION_PREVIEW_DISMISS -> NotificationManagerCompat.from(context).cancel(Notifications.PREVIEW_ID)
             ACTION_MISSED_SEEN -> Graph.scope.launch { Graph.callLog.markMissedRead() }
             ACTION_BLOCK -> if (number != null) {
                 val pending = goAsync()
@@ -53,6 +54,7 @@ class CallActionReceiver : BroadcastReceiver() {
         const val ACTION_BLOCK = "com.karelisio.allo.BLOCK"
         const val ACTION_ALLOW = "com.karelisio.allo.ALLOW"
         const val ACTION_MISSED_SEEN = "com.karelisio.allo.MISSED_SEEN"
+        const val ACTION_PREVIEW_DISMISS = "com.karelisio.allo.PREVIEW_DISMISS"
     }
 }
 

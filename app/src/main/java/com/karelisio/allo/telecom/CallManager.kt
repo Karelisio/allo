@@ -45,7 +45,8 @@ data class CallInfo(
 
 enum class AudioRoute { EARPIECE, SPEAKER, WIRED, BLUETOOTH, CAR }
 
-data class AudioOutput(val route: AudioRoute, val name: String, val address: String? = null)
+/** [endpointId] : identifiant CallEndpoint (Android 14+), sinon null. */
+data class AudioOutput(val route: AudioRoute, val name: String, val address: String? = null, val endpointId: String? = null)
 
 data class AudioUi(
     val muted: Boolean = false,
@@ -86,7 +87,7 @@ object CallManager {
         if (calls.contains(call)) return
         calls += call
         val cb = object : Call.Callback() {
-            override fun onStateChanged(call: Call, state: Int) = publish()
+            override fun onStateChanged(call: Call, state: Int) { com.karelisio.allo.util.CallDiagnostics.log("État : ${phaseOf(call)} (${com.karelisio.allo.util.CallDiagnostics.mask(numberOf(call))})"); publish() }
             override fun onDetailsChanged(call: Call, details: Call.Details) = publish()
             override fun onChildrenChanged(call: Call, children: MutableList<Call>) = publish()
             override fun onConferenceableCallsChanged(call: Call, conferenceableCalls: MutableList<Call>) = publish()
@@ -99,6 +100,8 @@ object CallManager {
     }
 
     fun remove(call: Call) {
+        val cause = call.details?.disconnectCause
+        com.karelisio.allo.util.CallDiagnostics.log("Fin d'appel (${com.karelisio.allo.util.CallDiagnostics.mask(numberOf(call))}) : ${cause?.label ?: cause?.code ?: "?"}${cause?.reason?.let { " / $it" } ?: ""}")
         callbacks.remove(call)?.let { call.unregisterCallback(it) }
         info(call)?.let { lastEnded.value = it.copy(phase = CallPhase.DISCONNECTED) }
         calls -= call
@@ -238,6 +241,8 @@ object CallManager {
     @Suppress("DEPRECATION") // setAudioRoute / requestBluetoothAudio : voir AlloInCallService
     fun selectOutput(o: AudioOutput) {
         val s = service ?: return
+        com.karelisio.allo.util.CallDiagnostics.log("Sortie audio demandée : ${o.name}")
+        if (Build.VERSION.SDK_INT >= 34 && o.endpointId != null && requestEndpoint(s, o.endpointId)) return
         when (o.route) {
             AudioRoute.SPEAKER -> s.setAudioRoute(CallAudioState.ROUTE_SPEAKER)
             AudioRoute.EARPIECE -> s.setAudioRoute(CallAudioState.ROUTE_EARPIECE)
@@ -252,6 +257,8 @@ object CallManager {
     @Suppress("MissingPermission")
     fun onAudioState(state: CallAudioState?) {
         rawAudio = state ?: return
+        // Android 14+ : les sorties viennent de CallEndpoint ; on ne garde ici que l'état du micro.
+        if (Build.VERSION.SDK_INT >= 34 && endpoints.isNotEmpty()) { _audio.value = _audio.value.copy(muted = state.isMuted); service?.onCallsChanged(_calls.value); return }
         val ctx = Graph.app
         val canBt = Build.VERSION.SDK_INT < 31 || ctx.hasPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
         fun btOutput(d: BluetoothDevice?): AudioOutput {
@@ -279,6 +286,77 @@ object CallManager {
         }
         _audio.value = AudioUi(state.isMuted, current, outputs)
         service?.onCallsChanged(_calls.value)
+    }
+
+    // ---- Android 14+ : CallEndpoint -----------------------------------------------------------
+
+    /** Liste de CallEndpoint (typée Any pour rester chargeable sur Android 10 à 13). */
+    private var endpoints: List<Any> = emptyList()
+    private var currentEndpoint: Any? = null
+
+    @androidx.annotation.RequiresApi(34)
+    fun onAvailableEndpoints(list: List<android.telecom.CallEndpoint>) { endpoints = list; publishEndpoints() }
+
+    @androidx.annotation.RequiresApi(34)
+    fun onCurrentEndpoint(e: android.telecom.CallEndpoint) {
+        currentEndpoint = e
+        com.karelisio.allo.util.CallDiagnostics.log("Sortie audio : ${e.endpointName}")
+        publishEndpoints()
+    }
+
+    fun onMuted(muted: Boolean) { _audio.value = _audio.value.copy(muted = muted); service?.onCallsChanged(_calls.value) }
+
+    @androidx.annotation.RequiresApi(34)
+    private fun toOutput(e: android.telecom.CallEndpoint): AudioOutput {
+        val name = e.endpointName.toString()
+        val route = when (e.endpointType) {
+            android.telecom.CallEndpoint.TYPE_SPEAKER -> AudioRoute.SPEAKER
+            android.telecom.CallEndpoint.TYPE_WIRED_HEADSET -> AudioRoute.WIRED
+            android.telecom.CallEndpoint.TYPE_BLUETOOTH -> if (isCar(name)) AudioRoute.CAR else AudioRoute.BLUETOOTH
+            else -> AudioRoute.EARPIECE
+        }
+        val label = when (route) {
+            AudioRoute.EARPIECE -> "Écouteur"
+            AudioRoute.SPEAKER -> "Haut-parleur"
+            AudioRoute.WIRED -> name.ifBlank { "Casque filaire" }
+            else -> name.ifBlank { "Bluetooth" }
+        }
+        return AudioOutput(route, label, endpointId = e.identifier.toString())
+    }
+
+    @androidx.annotation.RequiresApi(34)
+    private fun publishEndpoints() {
+        @Suppress("UNCHECKED_CAST") val list = (endpoints as List<android.telecom.CallEndpoint>).map { toOutput(it) }
+        val cur = (currentEndpoint as? android.telecom.CallEndpoint)?.let { toOutput(it) } ?: list.firstOrNull() ?: return
+        _audio.value = AudioUi(_audio.value.muted, cur, list.ifEmpty { listOf(cur) })
+        service?.onCallsChanged(_calls.value)
+    }
+
+    @androidx.annotation.RequiresApi(34)
+    private fun requestEndpoint(s: AlloInCallService, id: String): Boolean {
+        @Suppress("UNCHECKED_CAST")
+        val ep = (endpoints as List<android.telecom.CallEndpoint>).firstOrNull { it.identifier.toString() == id } ?: return false
+        s.requestCallEndpointChange(ep, s.mainExecutor, object : android.os.OutcomeReceiver<Void, android.telecom.CallEndpointException> {
+            override fun onResult(result: Void?) {}
+            override fun onError(error: android.telecom.CallEndpointException) {
+                com.karelisio.allo.util.CallDiagnostics.log("Échec du changement de sortie : ${error.code}")
+            }
+        })
+        return true
+    }
+
+    /** Voiture : appareil Bluetooth appairé de classe « audio voiture », ou nom évocateur. */
+    @Suppress("MissingPermission")
+    private fun isCar(name: String): Boolean {
+        val ctx = Graph.app
+        if (Build.VERSION.SDK_INT < 31 || ctx.hasPermission(android.Manifest.permission.BLUETOOTH_CONNECT)) {
+            val cls = runCatching {
+                ctx.getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter?.bondedDevices
+                    ?.firstOrNull { it.name == name }?.bluetoothClass?.deviceClass
+            }.getOrNull()
+            if (cls == BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO || cls == BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE) return true
+        }
+        return Regex("(?i)\\b(car|auto|voiture|carplay|android auto|peugeot|renault|citro[eë]n|toyota|tesla|vw|volkswagen|bmw|audi|mercedes|ford|kia|hyundai|dacia|skoda|seat|opel|fiat|nissan|mazda|volvo)\\b").containsMatchIn(name)
     }
 }
 

@@ -137,6 +137,27 @@ object Notifications {
         return b.build()
     }
 
+    const val PREVIEW_ID = 1004
+
+    /** Appel entrant de test (Fiabilité) : même chemin que les vrais appels (CallStyle + plein écran). */
+    fun notifyPreviewIncoming(context: Context) {
+        val open = PendingIntent.getActivity(context, 40,
+            Intent(context, InCallActivity::class.java).putExtra(InCallActivity.EXTRA_PREVIEW, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP), flags())
+        val p = Person.Builder().setName("Test Allô").setImportant(true).build()
+        val n = NotificationCompat.Builder(context, CH_INCOMING)
+            .setSmallIcon(R.drawable.ic_stat_call)
+            .setCategory(NotificationCompat.CATEGORY_CALL)
+            .setStyle(NotificationCompat.CallStyle.forIncomingCall(p, broadcast(context, CallActionReceiver.ACTION_PREVIEW_DISMISS), open))
+            .setFullScreenIntent(open, true)
+            .setContentIntent(open)
+            .setContentText("Appel de test")
+            .setTimeoutAfter(30_000)
+            .setAutoCancel(true)
+            .build()
+        runCatching { NotificationManagerCompat.from(context).notify(PREVIEW_ID, n) }
+    }
+
     fun notifyCall(context: Context, n: Notification) = runCatching {
         NotificationManagerCompat.from(context).notify(CALL_ID, n)
     }
