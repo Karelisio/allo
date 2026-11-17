@@ -206,6 +206,8 @@ fun CallScreen(
             )
             if (main.name != null && main.number.isNotEmpty()) {
                 Text(PhoneNumbers.format(main.number), style = MaterialTheme.typography.titleMedium, color = onBgVariant)
+            } else if (main.label == null) {
+                com.karelisio.allo.core.NumberInfo.describe(main.number)?.let { Text(it, style = MaterialTheme.typography.titleMedium, color = onBgVariant) }
             }
             main.label?.let { label ->
                 Spacer(Modifier.height(8.dp))

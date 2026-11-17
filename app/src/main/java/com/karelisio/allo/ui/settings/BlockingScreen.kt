@@ -184,7 +184,10 @@ fun BlockingScreen(vm: MainViewModel, nav: NavHostController) {
                         ).joinToString(" · "))
                     },
                     trailingContent = {
-                        if (b.number.isNotBlank()) TextButton(onClick = { scope.launch { Graph.block.allow(b.number) } }) { Text("Autoriser") }
+                        if (b.number.isNotBlank()) Row {
+                            TextButton(onClick = { nav.navigate(com.karelisio.allo.ui.Routes.edit(number = b.number, note = "Démarcheur")) }) { Text("Enregistrer") }
+                            TextButton(onClick = { scope.launch { Graph.block.allow(b.number) } }) { Text("Autoriser") }
+                        }
                     },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent), modifier = Modifier.padding(horizontal = 8.dp),
                 )

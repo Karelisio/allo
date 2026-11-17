@@ -302,7 +302,8 @@ fun CallRow(g: CallGroup, nav: NavHostController, selection: RowSelection? = nul
                         SimBadge(e.simSlot)
                         if (e.simSlot != null) Spacer(Modifier.width(4.dp))
                         val dur = CallLogGrouping.formatDuration(g.totalDuration)
-                        Text(listOfNotNull(timeLabel(e.date), dur.ifEmpty { null }).joinToString(" · "),
+                        val info = if (e.name == null) remember(e.number) { com.karelisio.allo.core.NumberInfo.describe(e.number)?.substringBefore(" ·") } else null
+                        Text(listOfNotNull(timeLabel(e.date), dur.ifEmpty { null }, info).joinToString(" · "),
                             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                     }
                 }
@@ -314,6 +315,8 @@ fun CallRow(g: CallGroup, nav: NavHostController, selection: RowSelection? = nul
                         onClick = { menu = false; ctx.copyToClipboard("Numéro", e.number) })
                     DropdownMenuItem(text = { Text("Bloquer") }, leadingIcon = { Icon(Icons.Rounded.Block, null) },
                         onClick = { menu = false; scope.launch { Graph.block.block(e.number) }; ctx.toast("Numéro bloqué") })
+                    if (e.name == null) DropdownMenuItem(text = { Text("Signaler comme démarchage") }, leadingIcon = { Icon(Icons.Rounded.Block, null) },
+                        onClick = { menu = false; scope.launch { Graph.block.block(e.number, label = REPORTED_LABEL) }; ctx.toast("Signalé comme démarchage et bloqué") })
                     if (e.name == null) DropdownMenuItem(text = { Text("Ajouter aux contacts") }, leadingIcon = { Icon(Icons.Rounded.PersonAdd, null) },
                         onClick = { menu = false; nav.navigate(Routes.edit(number = e.number)) })
                 }

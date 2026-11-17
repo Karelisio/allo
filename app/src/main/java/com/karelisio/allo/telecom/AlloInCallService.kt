@@ -82,6 +82,7 @@ class AlloInCallService : InCallService() {
         super.onCallRemoved(call)
         val missed = call.details?.disconnectCause?.code == android.telecom.DisconnectCause.MISSED
         CallManager.remove(call)
+        Graph.scope.launch { kotlinx.coroutines.delay(3_000); com.karelisio.allo.widget.RecentCallsWidget.refresh(this@AlloInCallService) }
         if (missed) Graph.scope.launch {
             kotlinx.coroutines.delay(2_500) // laisse le journal s'écrire
             if (Graph.settings.current().missedNotification) runCatching { com.karelisio.allo.notifications.Notifications.refreshMissed(this@AlloInCallService) }

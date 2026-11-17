@@ -71,10 +71,10 @@ private val PHONE_TYPES = listOf(Phone.TYPE_MOBILE to "Mobile", Phone.TYPE_HOME 
 
 /** Création et modification d'un contact (ContactsContract). */
 @Composable
-fun ContactEditScreen(nav: NavHostController, lookupKey: String?, initialNumber: String) {
+fun ContactEditScreen(nav: NavHostController, lookupKey: String?, initialNumber: String, initialNote: String = "") {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
-    var edit by remember { mutableStateOf(ContactEdit(phones = listOf(PhoneEntry(initialNumber, "Mobile")))) }
+    var edit by remember { mutableStateOf(ContactEdit(phones = listOf(PhoneEntry(initialNumber, "Mobile")), note = initialNote)) }
     var existingPhoto by remember { mutableStateOf<String?>(null) }
     var preview by remember { mutableStateOf<Bitmap?>(null) }
     var saving by remember { mutableStateOf(false) }

@@ -68,6 +68,9 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+/** Libellé des numéros signalés par l'utilisateur (liste noire). */
+const val REPORTED_LABEL = "Démarchage signalé"
+
 private val fullFmt = DateTimeFormatter.ofPattern("EEE d MMM yyyy · HH:mm", Locale.FRENCH)
 
 /** Détail d'un numéro : historique complet, durée totale, actions. */
@@ -93,12 +96,13 @@ fun NumberDetailScreen(vm: MainViewModel, nav: NavHostController, number: String
                     Avatar(null, null, size = 120.dp, key = number, modifier = Modifier.sharedAvatar(sk))
                     Spacer(Modifier.height(16.dp))
                     Text(if (hidden) "Numéro masqué" else PhoneNumbers.format(number), style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+                    com.karelisio.allo.core.NumberInfo.describe(number)?.let { Text(it, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                     if (blocked) Text("Numéro bloqué", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
                     Spacer(Modifier.height(20.dp))
                     if (!hidden) Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         ActionButton(Icons.Rounded.Call, "Appeler") { caller.call(number) }
                         ActionButton(Icons.Rounded.Sms, "SMS") { ctx.openSms(number) }
-                        ActionButton(Icons.Rounded.PersonAdd, "Ajouter") { nav.navigate(Routes.edit(number = number)) }
+                        ActionButton(Icons.Rounded.PersonAdd, "Ajouter") { nav.navigate(Routes.edit(number = number, note = if (blocked) "Démarcheur" else null)) }
                         ActionButton(Icons.Rounded.ContentCopy, "Copier") { ctx.copyToClipboard("Numéro", number) }
                         ActionButton(Icons.Rounded.Block, if (blocked) "Débloquer" else "Bloquer", if (blocked) MaterialTheme.colorScheme.error else null) {
                             scope.launch {
@@ -107,6 +111,12 @@ fun NumberDetailScreen(vm: MainViewModel, nav: NavHostController, number: String
                                 ctx.toast(if (blocked) "Numéro bloqué" else "Numéro débloqué")
                             }
                         }
+                    }
+                    if (!hidden && !blocked) {
+                        Spacer(Modifier.height(12.dp))
+                        androidx.compose.material3.OutlinedButton(onClick = {
+                            scope.launch { Graph.block.block(number, label = REPORTED_LABEL); blocked = true; ctx.toast("Signalé comme démarchage et bloqué") }
+                        }) { Text("Signaler comme démarchage") }
                     }
                     Spacer(Modifier.height(20.dp))
                     StatsCard(history.size, history.sumOf { it.durationSec })

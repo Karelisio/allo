@@ -207,6 +207,7 @@ object Notifications {
         keepIds += MISSED_SUMMARY_ID
         runCatching { nm.notify(MISSED_SUMMARY_ID, summary) }
         active.filter { it.id !in keepIds }.forEach { nm.cancel(it.id) }
+        com.karelisio.allo.widget.RecentCallsWidget.refresh(context)
     }
 
     fun cancelMissed(context: Context) {

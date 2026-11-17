@@ -52,7 +52,8 @@ object Routes {
     fun dialer(number: String = "", addCall: Boolean = false) = "dialer?number=${Uri.encode(number)}&add=$addCall"
     fun contact(lookupKey: String, sk: String? = null) = "contact/${Uri.encode(lookupKey)}?sk=${Uri.encode(sk ?: lookupKey)}"
     fun number(number: String, sk: String? = null) = "number/${Uri.encode(number.ifEmpty { "-" })}?sk=${Uri.encode(sk ?: number)}"
-    fun edit(lookupKey: String? = null, number: String? = null) = "edit?lookupKey=${Uri.encode(lookupKey ?: "")}&number=${Uri.encode(number ?: "")}"
+    fun edit(lookupKey: String? = null, number: String? = null, note: String? = null) =
+        "edit?lookupKey=${Uri.encode(lookupKey ?: "")}&number=${Uri.encode(number ?: "")}&note=${Uri.encode(note ?: "")}"
     const val SETTINGS = "settings"
     const val BLOCKING = "settings/blocking"
     const val REPLIES = "settings/replies"
@@ -117,11 +118,13 @@ fun AlloRoot(
                     screen("number/{number}?sk={sk}", listOf(navArgument("number") { type = NavType.StringType }, navArgument("sk") { type = NavType.StringType; defaultValue = "" })) {
                         NumberDetailScreen(vm, nav, it.arguments?.getString("number").orEmpty().let { n -> if (n == "-") "" else n }, it.arguments?.getString("sk"))
                     }
-                    screen("edit?lookupKey={lookupKey}&number={number}", listOf(
+                    screen("edit?lookupKey={lookupKey}&number={number}&note={note}", listOf(
                         navArgument("lookupKey") { type = NavType.StringType; defaultValue = "" },
                         navArgument("number") { type = NavType.StringType; defaultValue = "" },
+                        navArgument("note") { type = NavType.StringType; defaultValue = "" },
                     )) {
-                        ContactEditScreen(nav, it.arguments?.getString("lookupKey").orEmpty().ifEmpty { null }, it.arguments?.getString("number").orEmpty())
+                        ContactEditScreen(nav, it.arguments?.getString("lookupKey").orEmpty().ifEmpty { null }, it.arguments?.getString("number").orEmpty(),
+                            it.arguments?.getString("note").orEmpty())
                     }
                     screen(Routes.SETTINGS) { SettingsScreen(vm, nav) }
                     screen(Routes.BLOCKING) { BlockingScreen(vm, nav) }

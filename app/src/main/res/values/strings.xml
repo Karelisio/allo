@@ -4,4 +4,7 @@
     <string name="widget_name">Favoris Allô</string>
     <string name="widget_description">Appelle tes favoris d\'un geste</string>
     <string name="shortcut_dial">Clavier</string>
+    <string name="widget_recents_name">Appels récents Allô</string>
+    <string name="widget_recents_description">Tes derniers appels, un toucher pour rappeler</string>
+    <string name="tile_unknown">Inconnus en silence</string>
 </resources>
